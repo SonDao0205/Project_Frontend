@@ -99,3 +99,14 @@ h1{
 #form footer a{
   text-decoration: none;
 }
+
+.errorIncorrect,
+.errorEmpty {
+  color: red;
+  display: none;
+}
+
+
+#form .active{
+  border-color: red;
+}

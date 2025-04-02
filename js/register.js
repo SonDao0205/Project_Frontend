@@ -1,16 +1,3 @@
-const users = [
-    {
-        "id" : 1,
-        "username" : "123",
-        "password" : "123"
-    },
-    {
-        "id" : 2,
-        "username" : "234",
-        "password" : "234"
-    }
-]
-
 const usernameInputElement = document.querySelector("#usernameInput")
 const passwordInputElement = document.querySelector("#passwordInput")
 const confirmPasswordInputElement = document.querySelector("#confirmPasswordInput")

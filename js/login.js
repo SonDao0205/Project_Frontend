@@ -1,20 +1,9 @@
-const users = [
-    {
-        "id" : 1,
-        "username" : "123",
-        "password" : "123"
-    },
-    {
-        "id" : 2,
-        "username" : "234",
-        "password" : "234"
-    }
-]
-
 const usernameInputElement = document.querySelector("#usernameInput")
 const passwordInputElement = document.querySelector("#passwordInput")
 const confirmPasswordInputElement = document.querySelector("#confirmPasswordInput")
 const loginButtonElement = document.querySelector("#loginButton")
+const errorIncorrectElement = document.querySelectorAll("#errorIncorrect")
+const errorEmptyElement = document.querySelectorAll("#errorEmpty")
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
 
 loginButtonElement.addEventListener("click",(event) => {
@@ -23,18 +12,22 @@ loginButtonElement.addEventListener("click",(event) => {
     const usernameValue = usernameInputElement.value
     // kiểm tra sự hợp lệ của thông tin
     if(usernameValue.length === 0){
-        alert("Tên đăng nhập không được bỏ trống!")
+        errorEmptyElement[0].style.display = "block"
+        usernameInputElement.classList.add(".active")
         return
     }
     if (passwordValue.length === 0) {
-        alert("Mật khẩu không được bỏ trống")
+        errorEmptyElement[1].style.display = "block"
+        passwordInputElement.classList.add(".active")
         return
     }
     // kiểm tra sự tồn tại
     const user = userLocals.find(user => user.username === usernameValue && user.password === passwordValue);
     if (!user) {
-        alert("Tài khoản hoặc mật khẩu không đúng!");
-        return;
+        errorIncorrectElement.forEach(element => {
+            element.style.display = "block"
+        });
+        return
     }
     alert("Đăng nhập thành công!");
     window.location = "../pages/home.html"
