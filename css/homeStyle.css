@@ -355,8 +355,9 @@ main .historySpending #pagination{
 
 /* Cảnh báo vượt quá hạn mức */
 main .error {
-    max-height: 68px;
-    height: 100%;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
     font-size: 14px;
     line-height: 20px;
     align-items: flex-start;
@@ -406,4 +407,9 @@ footer{
     display: flex;
     justify-content: center;
     align-items: center;   
+}
+
+/* Nếu lỗi thì đổi ô input thành màu đỏ */
+.active{
+    border-color: red;
 }

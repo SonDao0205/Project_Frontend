@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Quản lý tài chính cá nhân</title>
+    <link rel="icon" type="image/x-icon" href="https://upload.wikimedia.org/wikipedia/commons/b/ba/Logo-Rikkei.png">
     <link rel="stylesheet" href="../css/loginRegisterStyle.css">
 </head>
 <body>
@@ -12,12 +13,18 @@
         <form method="post" id="form">
             <div class="form-group">
                 <input type="text" name="username" id="usernameInput" placeholder="Tên đăng nhập">
+                <p class="error">Tên tài khoản đã tồn tại</p>
+                <p class="errorEmpty">Tên đăng nhập không được bỏ trống!</p>
             </div>
             <div class="form-group">
                 <input type="password" name="password" id="passwordInput" placeholder="Mật khẩu">
+                <p class="error">Mật khẩu không hợp lệ!</p>
+                <p class="errorEmpty">Mật khẩu không được bỏ trống!</p>
             </div>
             <div class="form-group">
                 <input type="password" name="confirmPassword" id="confirmPasswordInput" placeholder="Xác nhận Mật khẩu">
+                <p class="error">Xác nhận mật khẩu không hợp lệ!</p>
+                <p class="errorEmpty">Xác nhận mật khẩu không được bỏ trống!</p>
             </div>
             <div class="form-group">
                 <button type="submit" id="registerButton">Đăng ký</button>
