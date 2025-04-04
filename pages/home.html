@@ -11,11 +11,21 @@
 </head>
 <body>
     <div class="container-fluid">
+        <div class="overlay"></div>
         <nav>
             <h1>📒 Tài Chính Cá Nhân K24_Rikkei</h1>
-            <a id="logOut" href="../pages/login.html">Đăng xuất</a>
-            
+            <a id="openModal" href="../pages/login.html">Đăng xuất</a>
         </nav>
+        <!-- mở ra phần xác nhận đăng xuất -->
+        <div id="modal">
+            <div class="modal-inner">
+                <h1>Bạn có thật sự muốn đăng xuất!</h1>
+                <div class="logOutButton">
+                    <button id="cancelLogOutButton">Huỷ</button>
+                    <button style="color: #1D4ED8;" id="logOutButton">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
         <section class="banners">
             <p class="top">🎯 Kiểm soát chi tiêu thông minh</p>
             <p class="bottom">Theo dõi ngân sách và thu chi hằng tháng dễ dàng</p>
@@ -76,7 +86,9 @@
                     <input type="text" name="search" id="searchHistoryInput" placeholder="Tìm nội dung">
                     <button style="background-color:#1D4ED8 ;" id="submitHistoryButton" class="btn btn-primary" type="button"><i class="bi bi-search"></i></button>
                     <select name="sort" id="sort">
-                        <option value="1">Sắp xếp theo giá</option>
+                        <option selected>Sắp xếp theo giá</option>
+                        <option value="1">Giảm dần</option>
+                        <option value="2">Tăng dần</option>
                     </select>
                 </form>
                 <!-- Danh sách lịch sử -->

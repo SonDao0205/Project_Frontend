@@ -124,16 +124,29 @@ const addSpendingElement = document.querySelector("#addSpending")
 const historyListElement = document.querySelector("#historyList")
 const searchHistoryInputElement = document.querySelector("#searchHistoryInput")
 const submitHistoryButtonElement = document.querySelector("#submitHistoryButton")
-const logOutElement = document.querySelector("#logOut")
+const openModalLogOutElement = document.querySelector("#openModal")
+const modalLogOutElement = document.querySelector("#modal")
+const logOutButtonElement = document.querySelector("#logOutButton")
+const cancelLogOutElement = document.querySelector("#cancelLogOutButton")
+const overlayElement = document.querySelector(".overlay")
+const sortElement = document.querySelector("#sort")
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
 
 // Đăng xuất
-logOutElement.addEventListener("click",() => {
-    if (confirm("Bạn có thật sự muốn đăng xuất không!")) {
-        userLocals[userLocals.length - 1].rememberLogin = 0
-        localStorage.setItem("users", JSON.stringify(userLocals))
-        return    
-    }
+openModalLogOutElement.addEventListener("click",(event)=>{
+    event.preventDefault()
+    overlayElement.style.display = "block"
+    modalLogOutElement.style.display = "block"
+})
+logOutButtonElement.addEventListener("click",()=>{
+    userLocals[userLocals.length - 1].rememberLogin = 0
+    localStorage.setItem("users", JSON.stringify(userLocals))
+    window.location = "../pages/login.html"
+})
+cancelLogOutElement.addEventListener("click",(event)=>{
+    event.preventDefault()
+    overlayElement.style.display = "none"
+    modalLogOutElement.style.display = "none"
 })
 
 // Hàm kiểm tra đã nhập thời gian chưa
@@ -345,8 +358,53 @@ const searchHistory = (searchHistoryValue) => {
     });
 }
 
+// sắp xếp lịch sử giao dịch
+const sortHistory = (sortValue) => {
+    const monthValue = monthInputElement.value
+    historyListElement.innerHTML = ""
+    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
+    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
+    if (sortValue == 1) {
+        transactions[historyIndex].transaction.sort((a, b) => b.amount - a.amount);
+    } else if (sortValue == 2) {
+        transactions[historyIndex].transaction.sort((a, b) => a.amount - b.amount);
+    }
+
+    if (historyIndex !== -1) {
+        const htmls = transactions[historyIndex].transaction.map((transaction) => {
+            if (categoryIndex !== -1) {
+                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
+                return `
+                <li>
+                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount} VND</span></p>
+                    <p class="function"><span class="deleteHistory">Xoá</span></p>
+                </li>`;
+            }
+        });
+        historyListElement.innerHTML = htmls.join("");
+    }
+
+    const deleteHistoryElement = document.querySelectorAll(".deleteHistory");
+    deleteHistoryElement.forEach((button, index) => {
+        button.addEventListener("click", () => {
+            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
+                handleDeleteHistory(index, historyIndex);
+            }
+        });
+    });
+}
 
 // CÁC EVENT BẤM
+
+// Vừa vào web sẽ tự động cập nhật ngày hôm nay
+
+// const newDate = 
+//         {
+//             month : monthValue,
+//             budget: 0,
+//             categories: []
+//         }
+//         monthlyCategories.push(newCategories)
 
 // Nhập ngày tháng, nhập ngân sách , in ra màn hình số ngân sách còn lại của tháng đó
 remainAmountElement.textContent = "0 VND"
@@ -474,3 +532,10 @@ submitHistoryButtonElement.addEventListener("click",(event) => {
     searchHistory(searchHistoryValue)
 })
 
+// sắp xếp lịch sử giao dịch theo giá
+sortElement.addEventListener("change",(event) => {
+    event.preventDefault()
+    validateMonth()
+    const sortValue = sortElement.value
+    sortHistory(sortValue)
+})

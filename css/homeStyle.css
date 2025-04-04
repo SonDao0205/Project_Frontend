@@ -49,6 +49,57 @@ nav a{
     line-height: 20px;
 }
 
+/* Phần popUp mở xác nhận đăng xuất, phần overlay hiện ra */
+#modal,
+.overlay{
+    display: none;
+}
+
+.overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+#modal{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    width: 40%;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 20;
+    text-align: start;
+}
+
+#modal h1{
+    font-size: 30px;
+    padding: 5px 0 10px;
+}
+
+#modal .logOutButton{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#modal .logOutButton button{
+    padding: 10px 20px;
+    border: transparent;
+    background-color: transparent;
+    color: white;
+    border-radius: 8px;
+    color: black;
+}
+
 /* phần banners */
 .banners{
     background-color: #4F46E5;
