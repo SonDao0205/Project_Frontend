@@ -6,7 +6,7 @@ const monthlyCategories = [
             {
                 id:1,
                 name:"Ăn uống",
-                limit:10000
+                limit:15000
             },
             {
                 id:2,
@@ -51,7 +51,7 @@ const transactions = [
                 id:1,
                 categoryId:1,
                 note:"ok",
-                amount:150000,
+                amount:15000,
             },
             {
                 id:2,
@@ -132,8 +132,7 @@ const overlayElement = document.querySelector(".overlay")
 const sortElement = document.querySelector("#sort")
 const paginationElement = document.querySelector(".pagination")
 const paginationButtonElement = document.querySelectorAll(".page-item")
-const errorElement = document.querySelectorAll("#error")
-const errorContentElement = document.querySelectorAll(".errorContent")
+const errorElement = document.querySelector("#error")
 const perPage = 3;
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
 
@@ -172,8 +171,7 @@ const validateBudget = () => {
 }
 
 // Hàm render ra dữ liệu của phần quản lý danh mục theo tháng
-const renderCategoriesData = () => {
-    const monthValue = monthInputElement.value
+const renderCategoriesData = (monthValue) => {
     categoryListElement.innerHTML = ""
     const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
     const htmls = monthlyCategories[categoryIndex].categories.map((category) => {
@@ -195,17 +193,17 @@ const renderCategoriesData = () => {
     deleteCategoryElements.forEach((button, index) => {
         button.addEventListener("click", () => {
             if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteCategory(index, categoryIndex)
+                handleDeleteCategory(index, categoryIndex,monthValue)
             }
         })
     })
 }
 
 // Hàm xoá phần tử trong quản lí danh mục
-const handleDeleteCategory = (index,categoryIndex) => {
+const handleDeleteCategory = (index,categoryIndex,monthValue) => {
     monthlyCategories[categoryIndex].categories.splice(index,1)
-    renderCategoriesData()
-    renderOption()
+    renderCategoriesData(monthValue)
+    renderOption(monthValue)
 }
 
 // Hàm sửa phần tử trong quản lí danh mục
@@ -276,8 +274,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
 }
 
 // render dữ liệu của option trong phần thêm chi tiêu
-const renderOption = () => {
-    const monthValue = monthInputElement.value
+const renderOption = (monthValue) => {
     spendingOptionElement.innerHTML = ""
     const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
     const htmls = monthlyCategories[categoryIndex].categories.map((category) => {
@@ -316,15 +313,16 @@ const renderHistory = () => {
     deleteHistoryElement.forEach((button,index) => {
         button.addEventListener("click", () => {
             if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index,historyIndex)
+                handleDeleteHistory(index,historyIndex,monthValue)
             }
         })
     });
 }
 // Hàm xoá lịch sử giao dịch
-const handleDeleteHistory = (index, historyIndex) => {
+const handleDeleteHistory = (index, historyIndex,monthValue) => {
     transactions[historyIndex].transaction.splice(index, 1)
     renderHistory()
+    budgetWarning(monthValue)
 }
 
 // Tìm kiếm lịch sử giao dịch
@@ -357,7 +355,7 @@ const searchHistory = (searchHistoryValue) => {
     deleteHistoryElement.forEach((button,index) => {
         button.addEventListener("click", () => {
             if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index,historyIndex)
+                handleDeleteHistory(index,historyIndex,monthValue)
             }
         })
     });
@@ -393,7 +391,7 @@ const sortHistory = (sortValue) => {
     deleteHistoryElement.forEach((button, index) => {
         button.addEventListener("click", () => {
             if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index, historyIndex);
+                handleDeleteHistory(index, historyIndex,monthValue);
             }
         });
     });
@@ -428,7 +426,7 @@ const renderPaginatedHistory = (page) => {
     deleteHistoryElement.forEach((button, index) => {
         button.addEventListener("click", () => {
             if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index, historyIndex);
+                handleDeleteHistory(index, historyIndex,monthValue);
             }
         });
     });
@@ -463,34 +461,75 @@ const renderPaginationControls = () => {
     }
 };
 
-const renderBudgetWarning = () => {
-    
-}
+// hiện cảnh báo nếu giao dịch quá limit của danh mục ấy
+const budgetWarning = (monthValue) => {
+    // Tìm dữ liệu tháng
+    const monthCategoriesIndex = monthlyCategories.findIndex(category => category.month === monthValue);
+    const monthTransactionIndex = transactions.findIndex(transaction => transaction.month === monthValue);
+    // lấy ra mảng tại thời gian đã tìm
+    const currentTransaction = transactions[monthTransactionIndex].transaction;
+    const currentCategory = monthlyCategories[monthCategoriesIndex].categories;
 
-// tính tổng số tiền của các danh mục trong lịch sử giao dịch và cảnh báo nếu vượt quá ngân sách
-const budgetWarning = () => {
-    const monthValue = monthInputElement.value
-    const transactionsMonthIndex = transactions.findIndex((element) => element.month === monthValue)
-    // Tính tổng amount của các phần tử có cùng id trong lịch sử giao dịch
-    const categoryTotals = {};
-    transactions[transactionsMonthIndex].transaction.forEach((transaction) => {
-        if (!categoryTotals[transaction.categoryId]) {
-            categoryTotals[transaction.categoryId] = 0;
+    let warningMessages = [];
+
+    for (let i = 0; i < currentCategory.length; i++) {
+        // lấy ra sản phẩm thứ i trong mảng 
+        const category = currentCategory[i];
+        
+        // lọc các giao dịch có cùng 1 danh mục
+        const transactionFilter = currentTransaction.filter((transaction) => transaction.categoryId === category.id);
+        
+        // nếu không có giao dịch nào thì bỏ qua
+        if (transactionFilter.length === 0) continue;
+
+        // tính tổng amount
+        const sum = transactionFilter.reduce((total, transaction) => {
+            return total + transaction.amount;
+        }, 0);
+
+        // kiểm tra vượt giới hạn
+        if (sum > category.limit) {
+            // nếu thoả mãn thì thêm vào warningMessages
+            warningMessages.push(`<p class="errorContent">Danh mục <span>"${category.name}"</span> đã vượt quá giới hạn: ${sum} / ${category.limit}</p>`)
         }
-        categoryTotals[transaction.categoryId] += transaction.amount;
-    });
-    
+    }
 
+    // render dữ liệu nếu thoả mãn
+    if (warningMessages !== "") {
+        errorElement.innerHTML = warningMessages.join("");
+        errorElement.classList.add("active");
+    } else {
+        errorElement.innerHTML = "";
+        errorElement.classList.remove("active");
+    }
+};
     
     
     
     
+    // // cộng amount của các danh mục giống nhau
+    // const sum = transactionItem.reduce((total,transaction) => {
+    //     return total + transaction.amount
+    // },0)
     
-    
+    // // so sánh tổng amount đó với budget tương ứng với tháng đó ở monthCategories
+    // if (sum > categoryItem.limit) {
+    //     errorElement.innerHTML = ""
+    //     errorElement.classList.add("active")
+    //     errorElement.innerHTML = `<p class="errorContent">Danh mục <span>"${categoryItem.name}"</span> đã vượt quá giới hạn: ${sum} / ${categoryItem.limit}</p>`
+    // }
+    // else{
+    //     errorElement.classList.remove("active")
+    // }
+    // nếu tổng amount < limit thì không render
+    // nếu tổng amount > limit thì set display phần warning thành block và render dữ liệu ra
+    // lặp lại với tất cả các sản phẩm có trong transition
+
+
+// hàm render thống kê chi tiêu theo danh mục
+const renderMonthSpending = (monthValue,) => {
+    // in ra từng tháng với totalAmount tương ứng với các tháng
 }
-
-// Thống kê chi tiêu các tháng
-const renderMonthlyReport = () => {}
 
 
 // CÁC EVENT BẤM
@@ -547,9 +586,9 @@ monthInputElement.addEventListener("change", (event) => {
         // render dữ liệu vào phần tiền còn lại
         remainAmountElement.textContent = `${monthlyCategories[index].budget} VND`
         // render dữ liệu vào phần quản lí danh mục
-        renderCategoriesData()    
+        renderCategoriesData(monthValue)    
         // render dữ liệu vào trong phần option
-        renderOption()
+        renderOption(monthValue)
         // render dữ liệu vào phần lịch sử giao dịch
         currentPage = 1;
         renderPaginatedHistory(currentPage);
@@ -561,6 +600,7 @@ monthInputElement.addEventListener("change", (event) => {
         historyListElement.innerHTML = "";
         paginationElement.innerHTML = "";
     }
+    renderMonthSpending(monthValue)
 })
 
 
@@ -591,15 +631,15 @@ addCategoryElement.addEventListener("click" , (event) => {
         editCategoryIndex = -1;
         // Đổi lại nút thành Thêm
         addCategoryElement.textContent = "Thêm";
-        renderOption()
+        renderOption(monthValue)
     }
     else{
         addCategory(monthValue,categoryNameValue,limitValue)      
     }
     categoryNameInputElement.value = ""
     limitInputElement.value = ""
-    renderCategoriesData()
-    renderOption()
+    renderCategoriesData(monthValue)
+    renderOption(monthValue)
 })
 
 // Thêm chi tiêu
@@ -623,9 +663,11 @@ addSpendingElement.addEventListener("click" ,(event) => {
     spendingNoteInputElement.value = ""
     currentPage = 1;
     renderPaginatedHistory(currentPage);
-    budgetWarning()
+    renderMonthSpending(monthValue)
+    budgetWarning(monthValue)
 })
 
+// nút tìm kiếm sản phẩm trong lịch sử giao dịch
 submitHistoryButtonElement.addEventListener("click",(event) => {
     event.preventDefault()
     searchHistoryInputElement.classList.remove("active")

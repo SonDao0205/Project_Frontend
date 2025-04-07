@@ -410,7 +410,7 @@ main #error{
 }
 
 main #error.active {
-    display: none;
+    display: block;
     height: fit-content;
     display: flex;
     flex-direction: column;
