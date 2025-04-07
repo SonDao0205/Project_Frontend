@@ -65,7 +65,7 @@ const transactions = [
         month:"2025-04",
         transaction:[
             {
-                id:2,
+                id:3,
                 month : "2025-04",
                 categoryId:4,
                 note:"hihi",
@@ -130,6 +130,11 @@ const logOutButtonElement = document.querySelector("#logOutButton")
 const cancelLogOutElement = document.querySelector("#cancelLogOutButton")
 const overlayElement = document.querySelector(".overlay")
 const sortElement = document.querySelector("#sort")
+const paginationElement = document.querySelector(".pagination")
+const paginationButtonElement = document.querySelectorAll(".page-item")
+const errorElement = document.querySelectorAll("#error")
+const errorContentElement = document.querySelectorAll(".errorContent")
+const perPage = 3;
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
 
 // Đăng xuất
@@ -394,6 +399,100 @@ const sortHistory = (sortValue) => {
     });
 }
 
+// Hàm render lịch sử giao dịch với phân trang
+const renderPaginatedHistory = (page) => {
+    const monthValue = monthInputElement.value;
+    historyListElement.innerHTML = "";
+    const historyIndex = transactions.findIndex((element) => element.month === monthValue);
+    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue);
+    
+    if (historyIndex !== -1) {
+        const start = (page - 1) * perPage;
+        const end = start + perPage;
+        const paginatedTransactions = transactions[historyIndex].transaction.slice(start, end);
+
+        const htmls = paginatedTransactions.map((transaction) => {
+            if (categoryIndex !== -1) {
+                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
+                return `
+                <li>
+                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount} VND</span></p>
+                    <p class="function"><span class="deleteHistory">Xoá</span></p>
+                </li>`;
+            }
+        });
+        historyListElement.innerHTML = htmls.join("");
+    }
+
+    const deleteHistoryElement = document.querySelectorAll(".deleteHistory");
+    deleteHistoryElement.forEach((button, index) => {
+        button.addEventListener("click", () => {
+            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
+                handleDeleteHistory(index, historyIndex);
+            }
+        });
+    });
+
+    renderPaginationControls();
+};
+
+// Hàm render các nút phân trang
+const renderPaginationControls = () => {
+    const monthValue = monthInputElement.value;
+    const historyIndex = transactions.findIndex((element) => element.month === monthValue);
+
+    if (historyIndex !== -1) {
+        const totalTransactions = transactions[historyIndex].transaction.length;
+        const totalPages = Math.ceil(totalTransactions / perPage);
+
+        paginationElement.innerHTML = "";
+        for (let i = 1; i <= totalPages; i++) {
+            paginationElement.innerHTML += `<li class="page-item ${i === currentPage ? "active" : ""}">
+                <a class="page-link" href="#">${i}</a>
+            </li>`;
+        }
+
+        const pageLinks = document.querySelectorAll(".page-item");
+        pageLinks.forEach((link, index) => {
+            link.addEventListener("click", (event) => {
+                event.preventDefault();
+                currentPage = index + 1;
+                renderPaginatedHistory(currentPage);
+            });
+        });
+    }
+};
+
+const renderBudgetWarning = () => {
+    
+}
+
+// tính tổng số tiền của các danh mục trong lịch sử giao dịch và cảnh báo nếu vượt quá ngân sách
+const budgetWarning = () => {
+    const monthValue = monthInputElement.value
+    const transactionsMonthIndex = transactions.findIndex((element) => element.month === monthValue)
+    // Tính tổng amount của các phần tử có cùng id trong lịch sử giao dịch
+    const categoryTotals = {};
+    transactions[transactionsMonthIndex].transaction.forEach((transaction) => {
+        if (!categoryTotals[transaction.categoryId]) {
+            categoryTotals[transaction.categoryId] = 0;
+        }
+        categoryTotals[transaction.categoryId] += transaction.amount;
+    });
+    
+
+    
+    
+    
+    
+    
+    
+}
+
+// Thống kê chi tiêu các tháng
+const renderMonthlyReport = () => {}
+
+
 // CÁC EVENT BẤM
 
 // Vừa vào web sẽ tự động cập nhật ngày hôm nay
@@ -405,6 +504,8 @@ const sortHistory = (sortValue) => {
 //             categories: []
 //         }
 //         monthlyCategories.push(newCategories)
+
+
 
 // Nhập ngày tháng, nhập ngân sách , in ra màn hình số ngân sách còn lại của tháng đó
 remainAmountElement.textContent = "0 VND"
@@ -450,15 +551,15 @@ monthInputElement.addEventListener("change", (event) => {
         // render dữ liệu vào trong phần option
         renderOption()
         // render dữ liệu vào phần lịch sử giao dịch
-        renderHistory()
+        currentPage = 1;
+        renderPaginatedHistory(currentPage);
     }
     // Nếu tháng đấy không tồn tại thì render trống 
     else{
         remainAmountElement.textContent = "0 VND"
         categoryListElement.innerHTML = ""
-
-        // render dữ liệu vào phần lịch sử giao dịch
-        renderHistory()
+        historyListElement.innerHTML = "";
+        paginationElement.innerHTML = "";
     }
 })
 
@@ -504,7 +605,9 @@ addCategoryElement.addEventListener("click" , (event) => {
 // Thêm chi tiêu
 addSpendingElement.addEventListener("click" ,(event) => {
     event.preventDefault()
-    validateMonth()
+    if (validateMonth()) {
+        return
+    }
     const monthValue = monthInputElement.value
     const spendingMoneyValue = spendingMoneyInputElement.value.trim()
     const spendingOptionValue = spendingOptionElement.value
@@ -518,7 +621,9 @@ addSpendingElement.addEventListener("click" ,(event) => {
     addSpending(monthValue,spendingMoneyValue,spendingOptionValue,spendingNoteValue,index)
     spendingMoneyInputElement.value = ""
     spendingNoteInputElement.value = ""
-    renderHistory()
+    currentPage = 1;
+    renderPaginatedHistory(currentPage);
+    budgetWarning()
 })
 
 submitHistoryButtonElement.addEventListener("click",(event) => {
@@ -539,3 +644,5 @@ sortElement.addEventListener("change",(event) => {
     const sortValue = sortElement.value
     sortHistory(sortValue)
 })
+
+

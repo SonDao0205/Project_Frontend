@@ -405,7 +405,12 @@ main .historySpending #pagination{
 }
 
 /* Cảnh báo vượt quá hạn mức */
-main .error {
+main #error{
+    display: none
+}
+
+main #error.active {
+    display: none;
     height: fit-content;
     display: flex;
     flex-direction: column;
@@ -414,6 +419,7 @@ main .error {
     align-items: flex-start;
     color: #DC2626;
     justify-content: center;
+
 }
 
 /* Bảng thống kê chi tiêu */
