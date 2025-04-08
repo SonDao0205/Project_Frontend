@@ -58,8 +58,16 @@ registerButtonElement.addEventListener("click",(event) => {
         "rememberLogin" :0
     }
     userLocals.push(newUsers)
-    localStorage.setItem("users",JSON.stringify(userLocals))
-    window.location = "../pages/login.html"
+    Swal.fire({
+        title: "Đăng ký tài khoản thành công",
+        icon: "success"
+        }).then((result) => {
+        if (result.isConfirmed) {
+            localStorage.setItem("users",JSON.stringify(userLocals))
+            window.location = "../pages/login.html"
+        }
+        });
+    
 })
 
 const errorDisable = () => {
@@ -74,14 +82,3 @@ const errorDisable = () => {
     });
 }
 
-// usernameInputElement.addEventListener("change",() => {
-//     errorDisable()
-// })
-
-// passwordInputElement.addEventListener("change",() => {
-//     errorDisable()
-// })
-
-// confirmPasswordInputElement.addEventListener("change",() => {
-//     errorDisable()
-// })

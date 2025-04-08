@@ -37,9 +37,17 @@ loginButtonElement.addEventListener("click",(event) => {
         });
         return
     }
-    userLocals[index].rememberLogin = 1;
-    localStorage.setItem("users", JSON.stringify(userLocals));
-    window.location = "../pages/home.html"
+    Swal.fire({
+    title: "Đăng nhập thành công",
+    icon: "success"
+    }).then((result) => {
+    if (result.isConfirmed) {
+        userLocals[index].rememberLogin = 1;
+        localStorage.setItem("users", JSON.stringify(userLocals));
+        window.location = "../pages/home.html"
+    }
+    });
+    
 })
 
 const errorDisable = () => {

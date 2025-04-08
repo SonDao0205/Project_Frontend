@@ -81,7 +81,7 @@ const transactions = [
 const monthlyReports = [
     {
         userId:1,
-        month:"2024-03",
+        month:"2025-03",
         totalAmount:200000,
         details : [
             {
@@ -96,7 +96,7 @@ const monthlyReports = [
     },
     {
         userId:1,
-        month:"2024-04",
+        month:"2025-04",
         totalAmount:120000,
         details : [
             {
@@ -134,23 +134,27 @@ const paginationElement = document.querySelector(".pagination")
 const paginationButtonElement = document.querySelectorAll(".page-item")
 const errorElement = document.querySelector("#error")
 const perPage = 3;
+const statisticsSpendingBodyElement = document.querySelector("#statisticsSpendingBody")
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
 
 // Đăng xuất
 openModalLogOutElement.addEventListener("click",(event)=>{
     event.preventDefault()
-    overlayElement.style.display = "block"
-    modalLogOutElement.style.display = "block"
-})
-logOutButtonElement.addEventListener("click",()=>{
-    userLocals[userLocals.length - 1].rememberLogin = 0
-    localStorage.setItem("users", JSON.stringify(userLocals))
-    window.location = "../pages/login.html"
-})
-cancelLogOutElement.addEventListener("click",(event)=>{
-    event.preventDefault()
-    overlayElement.style.display = "none"
-    modalLogOutElement.style.display = "none"
+    Swal.fire({
+        title: "Bạn có chắc chắn muốn đăng xuất!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Đúng, tôi muốn đăng xuất!",
+        cancelButtonText:"Huỷ"
+      }).then((result) => {
+        if (result.isConfirmed) {
+            userLocals[userLocals.length - 1].rememberLogin = 0
+            localStorage.setItem("users", JSON.stringify(userLocals))
+            window.location = "../pages/login.html"
+        }
+      });
 })
 
 // Hàm kiểm tra đã nhập thời gian chưa
@@ -192,9 +196,25 @@ const renderCategoriesData = (monthValue) => {
     
     deleteCategoryElements.forEach((button, index) => {
         button.addEventListener("click", () => {
-            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteCategory(index, categoryIndex,monthValue)
-            }
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, delete it!"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Deleted!",
+                    text: "Your file has been deleted.",
+                    icon: "success"
+                  });
+                  handleDeleteCategory(index, categoryIndex,monthValue)
+                }
+              });
+            
         })
     })
 }
@@ -204,6 +224,11 @@ const handleDeleteCategory = (index,categoryIndex,monthValue) => {
     monthlyCategories[categoryIndex].categories.splice(index,1)
     renderCategoriesData(monthValue)
     renderOption(monthValue)
+    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
+    handleDeleteHistory(index,historyIndex,monthValue)
+    currentPage = 1;
+    renderPaginatedHistory(currentPage);
+    
 }
 
 // Hàm sửa phần tử trong quản lí danh mục
@@ -495,7 +520,7 @@ const budgetWarning = (monthValue) => {
     }
 
     // render dữ liệu nếu thoả mãn
-    if (warningMessages !== "") {
+    if (warningMessages.length !== 0) {
         errorElement.innerHTML = warningMessages.join("");
         errorElement.classList.add("active");
     } else {
@@ -504,32 +529,54 @@ const budgetWarning = (monthValue) => {
     }
 };
     
-    
-    
-    
-    // // cộng amount của các danh mục giống nhau
-    // const sum = transactionItem.reduce((total,transaction) => {
-    //     return total + transaction.amount
-    // },0)
-    
-    // // so sánh tổng amount đó với budget tương ứng với tháng đó ở monthCategories
-    // if (sum > categoryItem.limit) {
-    //     errorElement.innerHTML = ""
-    //     errorElement.classList.add("active")
-    //     errorElement.innerHTML = `<p class="errorContent">Danh mục <span>"${categoryItem.name}"</span> đã vượt quá giới hạn: ${sum} / ${categoryItem.limit}</p>`
-    // }
-    // else{
-    //     errorElement.classList.remove("active")
-    // }
-    // nếu tổng amount < limit thì không render
-    // nếu tổng amount > limit thì set display phần warning thành block và render dữ liệu ra
-    // lặp lại với tất cả các sản phẩm có trong transition
-
-
 // hàm render thống kê chi tiêu theo danh mục
-const renderMonthSpending = (monthValue,) => {
-    // in ra từng tháng với totalAmount tương ứng với các tháng
-}
+// const renderMonthSpending = (monthValue) => {
+//     const monthTransactionIndex = transactions.findIndex((element) => element.month === monthValue)
+//     const currentTransaction = transactions[monthTransactionIndex].transaction
+//     const monthCategoriesIndex = monthlyCategories.findIndex((element) => element.month === monthValue)     
+//     const monthlyReportsItem = monthlyReports.find((element) => element.month === monthValue)    
+//     const monthlyReportsIndex = monthlyReports.findIndex((element) => element.month === monthValue)    
+//     const budget = monthlyCategories[monthCategoriesIndex].budget
+//     // console.log(monthlyReports[0].details);
+//     console.log(currentTransaction);
+//     // console.log(monthlyReportsItem.totalAmount);
+//     monthlyReportsItem.totalAmount = currentTransaction.reduce((total,transaction) => total + transaction.amount,0)
+//     const totalAmount = monthlyReportsItem.totalAmount
+//     console.log(totalAmount);
+//     console.log(budget);
+//     const newReport = {    
+//         categoryId:currentTransaction[0].categoryId,
+//         amount:currentTransaction[0].amount,
+//     }
+//     monthlyReportsItem.details.push(newReport)
+//     console.log(monthlyReportsItem);
+//     statisticsSpendingBodyElement.innerHTML = ""
+//     if (totalAmount < budget) {
+//         const htmls = monthlyReports[monthlyReportsIndex].details.map((category) => {
+//             return`
+//             <tr>
+//                 <td>${monthlyReportsItem.month}</td>
+//                 <td>${totalAmount} VND</td>
+//                 <td>${budget}</td>
+//                 <td class="pass">✅ Đạt</td>
+//             </tr>`
+//         })
+//         statisticsSpendingBodyElement.innerHTML = htmls.join("")
+//     }
+//     else{
+//         const htmls = monthlyReports[monthlyReportsIndex].details.map((category) => {
+//             return`
+//             <tr>
+//                 <td>${monthlyReportsItem.month}</td>
+//                 <td>${totalAmount} VND</td>
+//                 <td>${budget}</td>
+//                 <td class="pass">Vượt</td>
+//             </tr>`
+//         })
+//         statisticsSpendingBodyElement.innerHTML = htmls.join("")
+//     }
+    
+// }
 
 
 // CÁC EVENT BẤM
@@ -663,7 +710,6 @@ addSpendingElement.addEventListener("click" ,(event) => {
     spendingNoteInputElement.value = ""
     currentPage = 1;
     renderPaginatedHistory(currentPage);
-    renderMonthSpending(monthValue)
     budgetWarning(monthValue)
 })
 
