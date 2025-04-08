@@ -80,13 +80,12 @@ const transactions = [
 
 const monthlyReports = [
     {
-        userId:1,
         month:"2025-03",
         totalAmount:200000,
         details : [
             {
                 categoryId:1,
-                amount:150000
+                amount:15000
             },
             {
                 categoryId:3,
@@ -95,7 +94,6 @@ const monthlyReports = [
         ]
     },
     {
-        userId:1,
         month:"2025-04",
         totalAmount:120000,
         details : [
@@ -136,6 +134,9 @@ const errorElement = document.querySelector("#error")
 const perPage = 3;
 const statisticsSpendingBodyElement = document.querySelector("#statisticsSpendingBody")
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
+const monthlyCategoriesLocals = JSON.parse(localStorage.getItem("monthlyCategories")) || []
+const transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
+const monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
 
 // Đăng xuất
 openModalLogOutElement.addEventListener("click",(event)=>{
@@ -181,7 +182,7 @@ const renderCategoriesData = (monthValue) => {
     const htmls = monthlyCategories[categoryIndex].categories.map((category) => {
         return `
             <li>
-                <p>${category.name} - Giới hạn: <span id="limit">${category.limit} VND</span></p>
+                <p>${category.name} - Giới hạn: <span id="limit">${category.limit.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                 <p class="function"><span class="editCategory">Sửa</span>&nbsp;&nbsp;<span class="deleteCategory">Xoá</span></p>
             </li>`
     })
@@ -197,18 +198,17 @@ const renderCategoriesData = (monthValue) => {
     deleteCategoryElements.forEach((button, index) => {
         button.addEventListener("click", () => {
             Swal.fire({
-                title: "Are you sure?",
-                text: "You won't be able to revert this!",
+                title: "Bạn có chắc chắn muốn xoá mục này không",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, delete it!"
+                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
+                cancelButtonText: "Huỷ"
               }).then((result) => {
                 if (result.isConfirmed) {
                   Swal.fire({
-                    title: "Deleted!",
-                    text: "Your file has been deleted.",
+                    title: "Đã xoá thành công!",
                     icon: "success"
                   });
                   handleDeleteCategory(index, categoryIndex,monthValue)
@@ -286,6 +286,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             ]
         }
         transactions.push(newTransaction)
+        addReport(monthValue,newTransaction.transaction[0].categoryId,newTransaction.transaction[0].amount)
     }
     else{
         const newTransaction = {
@@ -295,6 +296,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             amount:+(spendingMoneyValue),
         }
         transactions[index].transaction.push(newTransaction)
+        addReport(monthValue,newTransaction.categoryId,newTransaction.amount)
     }
 }
 
@@ -322,7 +324,7 @@ const renderHistory = () => {
                 const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
                 return `
                 <li>
-                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount} VND</span></p>
+                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                     <p class="function"><span class="deleteHistory">Xoá</span></p>
                 </li>`
             }
@@ -337,9 +339,23 @@ const renderHistory = () => {
     const deleteHistoryElement = document.querySelectorAll(".deleteHistory")
     deleteHistoryElement.forEach((button,index) => {
         button.addEventListener("click", () => {
-            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index,historyIndex,monthValue)
-            }
+            Swal.fire({
+                title: "Bạn có chắc chắn muốn xoá mục này không",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
+                cancelButtonText: "Huỷ"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Đã xoá thành công!",
+                    icon: "success"
+                  });
+                  handleDeleteHistory(index,historyIndex,monthValue)
+                }
+              });
         })
     });
 }
@@ -363,7 +379,7 @@ const searchHistory = (searchHistoryValue) => {
                 if (category.name.toLowerCase() === searchHistoryValue.toLowerCase()) {
                     return `
                     <li>
-                        <p>${category.name} - <span>${transaction.note}</span> : <span>${transaction.amount} VND</span></p>
+                        <p>${category.name} - <span>${transaction.note}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                         <p class="function"><span class="deleteHistory">Xoá</span></p>
                     </li>`    
                 }
@@ -379,9 +395,23 @@ const searchHistory = (searchHistoryValue) => {
     const deleteHistoryElement = document.querySelectorAll(".deleteHistory")
     deleteHistoryElement.forEach((button,index) => {
         button.addEventListener("click", () => {
-            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index,historyIndex,monthValue)
-            }
+            Swal.fire({
+                title: "Bạn có chắc chắn muốn xoá mục này không",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
+                cancelButtonText: "Huỷ"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Đã xoá thành công!",
+                    icon: "success"
+                  });
+                  handleDeleteHistory(index,historyIndex,monthValue)
+                }
+              });
         })
     });
 }
@@ -404,7 +434,7 @@ const sortHistory = (sortValue) => {
                 const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
                 <li>
-                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount} VND</span></p>
+                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                     <p class="function"><span class="deleteHistory">Xoá</span></p>
                 </li>`;
             }
@@ -415,9 +445,23 @@ const sortHistory = (sortValue) => {
     const deleteHistoryElement = document.querySelectorAll(".deleteHistory");
     deleteHistoryElement.forEach((button, index) => {
         button.addEventListener("click", () => {
-            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index, historyIndex,monthValue);
-            }
+            Swal.fire({
+                title: "Bạn có chắc chắn muốn xoá mục này không",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
+                cancelButtonText: "Huỷ"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Đã xoá thành công!",
+                    icon: "success"
+                  });
+                  handleDeleteHistory(index,historyIndex,monthValue)
+                }
+              });
         });
     });
 }
@@ -439,7 +483,7 @@ const renderPaginatedHistory = (page) => {
                 const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
                 <li>
-                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount} VND</span></p>
+                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                     <p class="function"><span class="deleteHistory">Xoá</span></p>
                 </li>`;
             }
@@ -450,9 +494,23 @@ const renderPaginatedHistory = (page) => {
     const deleteHistoryElement = document.querySelectorAll(".deleteHistory");
     deleteHistoryElement.forEach((button, index) => {
         button.addEventListener("click", () => {
-            if (confirm("Bạn có chắc chắn muốn xoá mục này!")) {
-                handleDeleteHistory(index, historyIndex,monthValue);
-            }
+            Swal.fire({
+                title: "Bạn có chắc chắn muốn xoá mục này không",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
+                cancelButtonText: "Huỷ"
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Đã xoá thành công!",
+                    icon: "success"
+                  });
+                  handleDeleteHistory(index,historyIndex,monthValue)
+                }
+              });
         });
     });
 
@@ -528,70 +586,73 @@ const budgetWarning = (monthValue) => {
         errorElement.classList.remove("active");
     }
 };
-    
+
+// thêm chi tiêu vào trong thống kê các tháng
+const addReport = (monthValue,categoryId,categoryAmount) => {
+    const monthReportIndex = monthlyReports.findIndex((element) => element.month === monthValue)
+    if (monthReportIndex !== -1) {
+        const newReport = {
+            categoryId:categoryId,
+            amount:categoryAmount
+        }
+        monthlyReports[monthReportIndex].details.push(newReport)
+    }
+    else{
+        const newReport = {
+            month:monthValue,
+            totalAmount:0,
+            details : [
+                {
+                    categoryId:categoryId,
+                    amount:categoryAmount
+                }
+            ]
+        }
+        monthlyReports[monthReportIndex].details.push(newReport)
+    }
+}
+
+// hàm kiểm tra số chi tiêu có vượt quá ngân sách không
+const spendingStatisticsCheck = (monthValue) => {
+    const monthCategoriesItem = monthlyCategories.find((element) => element.month === monthValue)
+    const monthlyReportsItem = monthlyReports.find((element) => element.month === monthValue)
+    const sum = monthlyReportsItem.details.reduce((total,element) => total + element.amount,0)
+    monthlyReportsItem.totalAmount = sum
+    if (monthCategoriesItem.budget < sum) {
+        return true
+    }
+    else{
+        return false
+    }
+}
+
 // hàm render thống kê chi tiêu theo danh mục
-// const renderMonthSpending = (monthValue) => {
-//     const monthTransactionIndex = transactions.findIndex((element) => element.month === monthValue)
-//     const currentTransaction = transactions[monthTransactionIndex].transaction
-//     const monthCategoriesIndex = monthlyCategories.findIndex((element) => element.month === monthValue)     
-//     const monthlyReportsItem = monthlyReports.find((element) => element.month === monthValue)    
-//     const monthlyReportsIndex = monthlyReports.findIndex((element) => element.month === monthValue)    
-//     const budget = monthlyCategories[monthCategoriesIndex].budget
-//     // console.log(monthlyReports[0].details);
-//     console.log(currentTransaction);
-//     // console.log(monthlyReportsItem.totalAmount);
-//     monthlyReportsItem.totalAmount = currentTransaction.reduce((total,transaction) => total + transaction.amount,0)
-//     const totalAmount = monthlyReportsItem.totalAmount
-//     console.log(totalAmount);
-//     console.log(budget);
-//     const newReport = {    
-//         categoryId:currentTransaction[0].categoryId,
-//         amount:currentTransaction[0].amount,
-//     }
-//     monthlyReportsItem.details.push(newReport)
-//     console.log(monthlyReportsItem);
-//     statisticsSpendingBodyElement.innerHTML = ""
-//     if (totalAmount < budget) {
-//         const htmls = monthlyReports[monthlyReportsIndex].details.map((category) => {
-//             return`
-//             <tr>
-//                 <td>${monthlyReportsItem.month}</td>
-//                 <td>${totalAmount} VND</td>
-//                 <td>${budget}</td>
-//                 <td class="pass">✅ Đạt</td>
-//             </tr>`
-//         })
-//         statisticsSpendingBodyElement.innerHTML = htmls.join("")
-//     }
-//     else{
-//         const htmls = monthlyReports[monthlyReportsIndex].details.map((category) => {
-//             return`
-//             <tr>
-//                 <td>${monthlyReportsItem.month}</td>
-//                 <td>${totalAmount} VND</td>
-//                 <td>${budget}</td>
-//                 <td class="pass">Vượt</td>
-//             </tr>`
-//         })
-//         statisticsSpendingBodyElement.innerHTML = htmls.join("")
-//     }
+const monthlySpendingStatistics = () => {
+    statisticsSpendingBodyElement.innerHTML = ""
+    monthlyReports.forEach((element) => {
+        spendingStatisticsCheck(element.month)
+        const monthCategoriesItem = monthlyCategories.find((category) => category.month === element.month)
+        const htmls = element.details.map((report) => {
+            return`
+            <tr>
+                <td>${element.month}</td>
+                <td>${report.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</td>
+                <td>${monthCategoriesItem.budget.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</td>
+                <td class="pass">${spendingStatisticsCheck(element.month) ? `✅ Đạt` : `Vượt`}</td>
+            </tr>`
+        })
+        statisticsSpendingBodyElement.innerHTML += htmls.join("")
+    })
     
-// }
+}
 
 
-// CÁC EVENT BẤM
+// CÁC EVENT KHI THAO TÁC VÀ SỰ KIỆN SẼ CHẠY KHI VỪA VÀO WEB
+monthlySpendingStatistics()
 
-// Vừa vào web sẽ tự động cập nhật ngày hôm nay
+// bắt đầu vào web thì sẽ cập nhật monthValue = ngày hôm nay
 
-// const newDate = 
-//         {
-//             month : monthValue,
-//             budget: 0,
-//             categories: []
-//         }
-//         monthlyCategories.push(newCategories)
-
-
+// bắt đầu vào web sẽ render thống kê chi tiêu các tháng
 
 // Nhập ngày tháng, nhập ngân sách , in ra màn hình số ngân sách còn lại của tháng đó
 remainAmountElement.textContent = "0 VND"
@@ -604,7 +665,7 @@ saveButtonElement.addEventListener("click", (event) => {
     const index = monthlyCategories.findIndex((element) => element.month === monthValue)
     if (index !== -1) {
         monthlyCategories[index].budget = +(budgetValue)
-        remainAmountElement.textContent = `${monthlyCategories[index].budget} VND`
+        remainAmountElement.textContent = `${monthlyCategories[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         monthInputElement.value = ""
         return
     }
@@ -616,10 +677,9 @@ saveButtonElement.addEventListener("click", (event) => {
             categories: []
         }
         monthlyCategories.push(newCategories)
-        remainAmountElement.textContent = `${monthlyCategories[monthlyCategories.length-1].budget} VND`
+        remainAmountElement.textContent = `${monthlyCategories[monthlyCategories.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         monthInputElement.value = ""
     }
-
 })
 // Khi đổi tháng thì dữ liệu sẽ được render theo tháng đấy (Quản lí danh mục, số tiền còn lại, lịch sử giao dịch)
 monthInputElement.addEventListener("change", (event) => {
@@ -631,7 +691,7 @@ monthInputElement.addEventListener("change", (event) => {
     // Nếu tháng đấy tồn tại thì render ra dữ liệu tháng đó
     if (index !== -1) {
         // render dữ liệu vào phần tiền còn lại
-        remainAmountElement.textContent = `${monthlyCategories[index].budget} VND`
+        remainAmountElement.textContent = `${monthlyCategories[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         // render dữ liệu vào phần quản lí danh mục
         renderCategoriesData(monthValue)    
         // render dữ liệu vào trong phần option
@@ -647,7 +707,7 @@ monthInputElement.addEventListener("change", (event) => {
         historyListElement.innerHTML = "";
         paginationElement.innerHTML = "";
     }
-    renderMonthSpending(monthValue)
+    monthlySpendingStatistics()
 })
 
 
