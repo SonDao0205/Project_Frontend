@@ -43,7 +43,6 @@ loginButtonElement.addEventListener("click",(event) => {
     }).then((result) => {
     if (result.isConfirmed) {
         userLocals[index].rememberLogin = 1;
-        localStorage.setItem("users", JSON.stringify(userLocals));
         window.location = "../pages/home.html"
     }
     });

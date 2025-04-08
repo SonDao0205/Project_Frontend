@@ -4,8 +4,10 @@ const confirmPasswordInputElement = document.querySelector("#confirmPasswordInpu
 const registerButtonElement = document.querySelector("#registerButton")
 const errorElement = document.querySelectorAll(".error")
 const errorEmptyElement = document.querySelectorAll(".errorEmpty")
-const userLocals = JSON.parse(localStorage.getItem("users")) || []
-userLocals[userLocals.length - 1].rememberLogin = 0
+const userLocals = JSON.parse(localStorage.getItem("users")) || [];
+if (userLocals.length > 0) {
+    userLocals[userLocals.length - 1].rememberLogin = 0;
+}
 const validatePassword = (passwordValue) => {
     const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/;
     return passwordRegex.test(passwordValue);
@@ -13,6 +15,7 @@ const validatePassword = (passwordValue) => {
 
 registerButtonElement.addEventListener("click",(event) => {
     event.preventDefault()
+    errorDisable(); // Reset lỗi hiển thị trước khi kiểm tra
     const passwordValue = passwordInputElement.value
     const usernameValue = usernameInputElement.value
     const confirmPasswordValue = confirmPasswordInputElement.value
@@ -58,12 +61,12 @@ registerButtonElement.addEventListener("click",(event) => {
         "rememberLogin" :0
     }
     userLocals.push(newUsers)
+    localStorage.setItem("users",JSON.stringify(userLocals))
     Swal.fire({
         title: "Đăng ký tài khoản thành công",
         icon: "success"
         }).then((result) => {
         if (result.isConfirmed) {
-            localStorage.setItem("users",JSON.stringify(userLocals))
             window.location = "../pages/login.html"
         }
         });
