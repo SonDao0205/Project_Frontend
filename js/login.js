@@ -53,6 +53,7 @@ loginButtonElement.addEventListener("click",(event) => {
         title: "Đăng Nhập Thành Công"
       }).then(() => {
         userLocals[index].rememberLogin = 1;
+        localStorage.setItem("users",JSON.stringify(userLocals))
         window.location = "../pages/home.html"
         });
     

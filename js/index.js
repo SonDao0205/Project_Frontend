@@ -143,6 +143,7 @@ const saveLocals = () => {
     localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
     localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
     localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
+    localStorage.setItem("users", JSON.stringify(userLocals))
 }
 if (monthlyCategoriesLocals.length === 0 && transactionsLocals.length === 0 && monthlyReportsLocals.length === 0) {
     monthlyCategoriesLocals = [...monthlyCategories]
@@ -166,7 +167,7 @@ openModalLogOutElement.addEventListener("click",(event)=>{
       }).then((result) => {
         if (result.isConfirmed) {
             userLocals[userLocals.length - 1].rememberLogin = 0
-            localStorage.setItem("users", JSON.stringify(userLocals))
+            saveLocals()
             window.location = "../pages/login.html"
         }
       });
@@ -264,7 +265,7 @@ const addCategory = (monthValue,categoryNameValue,limitValue) => {
             limit:+(limitValue)
         }
         monthlyCategoriesLocals[index].categories.push(newCategories)
-        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
+        saveLocals()
         return
     }
     else{
@@ -282,7 +283,7 @@ const addCategory = (monthValue,categoryNameValue,limitValue) => {
             ]
         }
         monthlyCategoriesLocals.push(newCategories)
-        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
+        saveLocals()
         
     }
 }
@@ -302,7 +303,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             ]
         }
         transactionsLocals.push(newTransaction)
-        localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
+        saveLocals()
         addReport(monthValue,newTransaction.transaction[0].categoryId,newTransaction.transaction[0].amount)
     }
     else{
@@ -313,7 +314,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             amount:+(spendingMoneyValue),
         }
         transactionsLocals[index].transaction.push(newTransaction)
-        localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
+        saveLocals()
         addReport(monthValue,newTransaction.categoryId,newTransaction.amount)
     }
 }
@@ -614,7 +615,7 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
             amount:categoryAmount
         }
         monthlyReportsLocals[monthReportIndex].details.push(newReport)
-        localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
+        saveLocals()
     }
     else{
         const newReport = {
@@ -628,7 +629,7 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
             ]
         }
         monthlyReportsLocals.push(newReport)
-        localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
+        saveLocals()
     }
 }
 
@@ -737,7 +738,7 @@ saveButtonElement.addEventListener("click", (event) => {
             categories: []
         }
         monthlyCategoriesLocals.push(newCategories)
-        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
+        saveLocals()
         remainAmountElement.textContent = `${monthlyCategoriesLocals[monthlyCategoriesLocals.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
     }
     console.log(monthValue);
