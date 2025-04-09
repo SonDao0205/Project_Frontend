@@ -139,19 +139,22 @@ const userLocals = JSON.parse(localStorage.getItem("users")) || []
 let monthlyCategoriesLocals = JSON.parse(localStorage.getItem("monthlyCategories")) || []
 let transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
 let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
+
+// Lưu dữ liệu vào localStorage
 const saveLocals = () => {
     localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
     localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
     localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
     localStorage.setItem("users", JSON.stringify(userLocals))
 }
+saveLocals()
+// Nếu local mà trống chưa có dữ liệu thì sẽ gán dữ liệu mặc định vào
 if (monthlyCategoriesLocals.length === 0 && transactionsLocals.length === 0 && monthlyReportsLocals.length === 0) {
     monthlyCategoriesLocals = [...monthlyCategories]
     transactionsLocals = [...transactions]
     monthlyReportsLocals = [...monthlyReports]
     saveLocals()
 }
-saveLocals()
 
 // Đăng xuất
 openModalLogOutElement.addEventListener("click",(event)=>{
@@ -563,6 +566,7 @@ const renderPaginationControls = () => {
     }
 };
 
+
 // hiện cảnh báo nếu giao dịch quá limit của danh mục ấy
 const budgetWarning = (monthValue) => {
     // Tìm dữ liệu tháng
@@ -631,6 +635,7 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
         monthlyReportsLocals.push(newReport)
         saveLocals()
     }
+    monthlySpendingStatistics()
 }
 
 // hàm kiểm tra số chi tiêu có vượt quá ngân sách không
@@ -650,7 +655,7 @@ const spendingStatisticsCheck = (monthValue) => {
 const monthlySpendingStatistics = () => {
     statisticsSpendingBodyElement.innerHTML = ""
     const htmls = monthlyReportsLocals.map((element)=> {
-        const monthCategoriesItem = monthlyCategories.find((item) => item.month === element.month)
+        const monthCategoriesItem = monthlyCategoriesLocals.find((item) => item.month === element.month)
         spendingStatisticsCheck(element.month)
         return`
             <tr>
@@ -684,8 +689,9 @@ const firstRender = (index,monthValue) => {
         }
 }
     
-    // hàm sẽ lấy ra ngày hôm nay và render ra dữ liệu của ngày hôm nay
+// hàm sẽ lấy ra ngày hôm nay và render ra dữ liệu của ngày hôm nay
 const load = () => {
+    // bắt đầu vào web thì sẽ cập nhật monthValue = ngày hôm nay
     const date = new Date()
     let year = date.getFullYear().toString()
     let month = (date.getMonth()+1).toString()
@@ -706,13 +712,11 @@ const load = () => {
     saveLocals()
 }
 
-// CÁC EVENT KHI THAO TÁC VÀ SỰ KIỆN SẼ CHẠY KHI VỪA VÀO WEB
+// load dữ liệu của tháng hiện tại và render dữ liệu của tháng đó
 budgetInputElement.textContent = "0 VND"
 load()
 
-// bắt đầu vào web thì sẽ cập nhật monthValue = ngày hôm nay
-
-// bắt đầu vào web sẽ render thống kê chi tiêu các tháng
+// CÁC EVENT
 
 // Nhập ngày tháng, nhập ngân sách , in ra màn hình số ngân sách còn lại của tháng đó
 saveButtonElement.addEventListener("click", (event) => {
@@ -726,8 +730,6 @@ saveButtonElement.addEventListener("click", (event) => {
         monthlyCategoriesLocals[index].budget = +(budgetValue)
         monthlyCategoriesLocals[index].remainMoney = +(budgetValue)
         remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
-        monthInputElement.value = ""
-        return
     }
     else{
         const newCategories = 
@@ -738,10 +740,11 @@ saveButtonElement.addEventListener("click", (event) => {
             categories: []
         }
         monthlyCategoriesLocals.push(newCategories)
-        saveLocals()
         remainAmountElement.textContent = `${monthlyCategoriesLocals[monthlyCategoriesLocals.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
     }
-    console.log(monthValue);
+    budgetInputElement.value = ""
+    saveLocals()
+    monthlySpendingStatistics()
     
 })
 
