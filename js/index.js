@@ -2,7 +2,8 @@
 const monthlyCategories = [
     {
         month : "2025-03",
-        budget:50000,
+        budget:1000000,
+        remainMoney: 1000000,
         categories: [
             {
                 id:1,
@@ -23,7 +24,8 @@ const monthlyCategories = [
     },
     {
         month : "2025-04",
-        budget:40000,
+        budget:2000000,
+        remainMoney: 2000000,
         categories: [
             {
                 id:4,
@@ -135,17 +137,22 @@ const errorElement = document.querySelector("#error")
 const perPage = 3;
 const statisticsSpendingBodyElement = document.querySelector("#statisticsSpendingBody")
 const userLocals = JSON.parse(localStorage.getItem("users")) || []
-const monthlyCategoriesLocals = JSON.parse(localStorage.getItem("monthlyCategories")) || []
-const transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
-const monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
-if (monthlyCategoriesLocals.length === 0 && transactionsLocals.length === 0 && monthlyReportsLocals.length === 0) {
-    monthlyCategoriesLocals.push(monthlyCategories)
-    transactionsLocals.push(transactions)
-    monthlyReportsLocals.push(monthlyReports)
+let monthlyCategoriesLocals = JSON.parse(localStorage.getItem("monthlyCategories")) || []
+let transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
+let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
+const saveLocals = () => {
     localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
     localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
     localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
 }
+if (monthlyCategoriesLocals.length === 0 && transactionsLocals.length === 0 && monthlyReportsLocals.length === 0) {
+    monthlyCategoriesLocals = [...monthlyCategories]
+    transactionsLocals = [...transactions]
+    monthlyReportsLocals = [...monthlyReports]
+    saveLocals()
+}
+saveLocals()
+
 // Đăng xuất
 openModalLogOutElement.addEventListener("click",(event)=>{
     event.preventDefault()
@@ -177,7 +184,7 @@ const validateMonth = () => {
 // Hàm chỉ dùng khi tạo 1 mảng mới để kiểm tra xem mảng đó đã nhập ngân sách chưa
 const validateBudget = () => {
     const budgetValue = budgetInputElement.value.trim()
-    if (budgetValue.length === 0) {
+    if (budgetValue.length === 0 || budgetValue < 0) {
         budgetInputElement.classList.add("active")
         return
     }
@@ -186,8 +193,8 @@ const validateBudget = () => {
 // Hàm render ra dữ liệu của phần quản lý danh mục theo tháng
 const renderCategoriesData = (monthValue) => {
     categoryListElement.innerHTML = ""
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
-    const htmls = monthlyCategories[categoryIndex].categories.map((category) => {
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    const htmls = monthlyCategoriesLocals[categoryIndex].categories.map((category) => {
         return `
             <li>
                 <p>${category.name} - Giới hạn: <span id="limit">${category.limit.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
@@ -229,10 +236,10 @@ const renderCategoriesData = (monthValue) => {
 
 // Hàm xoá phần tử trong quản lí danh mục
 const handleDeleteCategory = (index,categoryIndex,monthValue) => {
-    monthlyCategories[categoryIndex].categories.splice(index,1)
+    monthlyCategoriesLocals[categoryIndex].categories.splice(index,1)
     renderCategoriesData(monthValue)
     renderOption(monthValue)
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
     handleDeleteHistory(index,historyIndex,monthValue)
     currentPage = 1;
     renderPaginatedHistory(currentPage);
@@ -244,20 +251,21 @@ const handleEditCategory = (index,categoryIndex) => {
     addCategoryElement.textContent = "Lưu"
     editIndex = index
     editCategoryIndex = categoryIndex
-    categoryNameInputElement.value = monthlyCategories[categoryIndex].categories[index].name
-    limitInputElement.value = monthlyCategories[categoryIndex].categories[index].limit
+    categoryNameInputElement.value = monthlyCategoriesLocals[categoryIndex].categories[index].name
+    limitInputElement.value = monthlyCategoriesLocals[categoryIndex].categories[index].limit
 }
 
 // Hàm thêm phần tử vào mảng : nếu như nhập thời gian đã tồn tại thì thêm vào mảng của thời gian đó, nếu nhập thời gian mới thì tạo ra mảng mới
 const addCategory = (monthValue,categoryNameValue,limitValue) => {
-    const index = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     if (index !== -1) {
         const newCategories = {
             id:Math.floor(Math.random() * 99),
             name:categoryNameValue,
             limit:+(limitValue)
         }
-        monthlyCategories[index].categories.push(newCategories)
+        monthlyCategoriesLocals[index].categories.push(newCategories)
+        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
         return
     }
     else{
@@ -274,7 +282,8 @@ const addCategory = (monthValue,categoryNameValue,limitValue) => {
                 }
             ]
         }
-        monthlyCategories.push(newCategories)
+        monthlyCategoriesLocals.push(newCategories)
+        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
         
     }
 }
@@ -293,7 +302,8 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
                 }
             ]
         }
-        transactions.push(newTransaction)
+        transactionsLocals.push(newTransaction)
+        localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
         addReport(monthValue,newTransaction.transaction[0].categoryId,newTransaction.transaction[0].amount)
     }
     else{
@@ -303,7 +313,8 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             note:spendingNoteValue,
             amount:+(spendingMoneyValue),
         }
-        transactions[index].transaction.push(newTransaction)
+        transactionsLocals[index].transaction.push(newTransaction)
+        localStorage.setItem("transactions",JSON.stringify(transactionsLocals))
         addReport(monthValue,newTransaction.categoryId,newTransaction.amount)
     }
 }
@@ -311,8 +322,8 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
 // render dữ liệu của option trong phần thêm chi tiêu
 const renderOption = (monthValue) => {
     spendingOptionElement.innerHTML = ""
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
-    const htmls = monthlyCategories[categoryIndex].categories.map((category) => {
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    const htmls = monthlyCategoriesLocals[categoryIndex].categories.map((category) => {
         return `
         <option value="${category.id}">${category.name}</option>`
     })
@@ -323,13 +334,13 @@ const renderOption = (monthValue) => {
 const renderHistory = () => {
     const monthValue = monthInputElement.value
     historyListElement.innerHTML = ""
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     
     if (historyIndex !== -1) {
-        const htmls = transactions[historyIndex].transaction.map((transaction) => {
+        const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
-                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
+                const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
@@ -369,7 +380,7 @@ const renderHistory = () => {
 }
 // Hàm xoá lịch sử giao dịch
 const handleDeleteHistory = (index, historyIndex,monthValue) => {
-    transactions[historyIndex].transaction.splice(index, 1)
+    transactionsLocals[historyIndex].transaction.splice(index, 1)
     renderHistory()
     budgetWarning(monthValue)
 }
@@ -378,12 +389,12 @@ const handleDeleteHistory = (index, historyIndex,monthValue) => {
 const searchHistory = (searchHistoryValue) => {
     const monthValue = monthInputElement.value
     historyListElement.innerHTML = ""
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     if (historyIndex !== -1) {
-        const htmls = transactions[historyIndex].transaction.map((transaction) => {
+        const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
-                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
+                const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
                 if (category.name.toLowerCase() === searchHistoryValue.toLowerCase()) {
                     return `
                     <li>
@@ -428,16 +439,16 @@ const searchHistory = (searchHistoryValue) => {
 const sortHistory = (sortValue) => {
     const monthValue = monthInputElement.value
     historyListElement.innerHTML = ""
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue)
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
     const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
     if (sortValue == 1) {
-        transactions[historyIndex].transaction.sort((a, b) => b.amount - a.amount);
+        transactionsLocals[historyIndex].transaction.sort((a, b) => b.amount - a.amount);
     } else if (sortValue == 2) {
-        transactions[historyIndex].transaction.sort((a, b) => a.amount - b.amount);
+        transactionsLocals[historyIndex].transaction.sort((a, b) => a.amount - b.amount);
     }
 
     if (historyIndex !== -1) {
-        const htmls = transactions[historyIndex].transaction.map((transaction) => {
+        const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
                 const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
@@ -478,17 +489,17 @@ const sortHistory = (sortValue) => {
 const renderPaginatedHistory = (page) => {
     const monthValue = monthInputElement.value;
     historyListElement.innerHTML = "";
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue);
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue);
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue);
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue);
     
     if (historyIndex !== -1) {
         const start = (page - 1) * perPage;
         const end = start + perPage;
-        const paginatedTransactions = transactions[historyIndex].transaction.slice(start, end);
+        const paginatedTransactions = transactionsLocals[historyIndex].transaction.slice(start, end);
 
         const htmls = paginatedTransactions.map((transaction) => {
             if (categoryIndex !== -1) {
-                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
+                const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
@@ -528,10 +539,10 @@ const renderPaginatedHistory = (page) => {
 // Hàm render các nút phân trang
 const renderPaginationControls = () => {
     const monthValue = monthInputElement.value;
-    const historyIndex = transactions.findIndex((element) => element.month === monthValue);
+    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue);
 
     if (historyIndex !== -1) {
-        const totalTransactions = transactions[historyIndex].transaction.length;
+        const totalTransactions = transactionsLocals[historyIndex].transaction.length;
         const totalPages = Math.ceil(totalTransactions / perPage);
 
         paginationElement.innerHTML = "";
@@ -555,11 +566,11 @@ const renderPaginationControls = () => {
 // hiện cảnh báo nếu giao dịch quá limit của danh mục ấy
 const budgetWarning = (monthValue) => {
     // Tìm dữ liệu tháng
-    const monthCategoriesIndex = monthlyCategories.findIndex(category => category.month === monthValue);
-    const monthTransactionIndex = transactions.findIndex(transaction => transaction.month === monthValue);
+    const monthCategoriesIndex = monthlyCategoriesLocals.findIndex(category => category.month === monthValue);
+    const monthTransactionIndex = transactionsLocals.findIndex(transaction => transaction.month === monthValue);
     // lấy ra mảng tại thời gian đã tìm
-    const currentTransaction = transactions[monthTransactionIndex].transaction;
-    const currentCategory = monthlyCategories[monthCategoriesIndex].categories;
+    const currentTransaction = transactionsLocals[monthTransactionIndex].transaction;
+    const currentCategory = monthlyCategoriesLocals[monthCategoriesIndex].categories;
 
     let warningMessages = [];
 
@@ -597,13 +608,14 @@ const budgetWarning = (monthValue) => {
 
 // thêm chi tiêu vào trong thống kê các tháng
 const addReport = (monthValue,categoryId,categoryAmount) => {
-    const monthReportIndex = monthlyReports.findIndex((element) => element.month === monthValue)
+    const monthReportIndex = monthlyReportsLocals.findIndex((element) => element.month === monthValue)
     if (monthReportIndex !== -1) {
         const newReport = {
             categoryId:categoryId,
             amount:categoryAmount
         }
-        monthlyReports[monthReportIndex].details.push(newReport)
+        monthlyReportsLocals[monthReportIndex].details.push(newReport)
+        localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
     }
     else{
         const newReport = {
@@ -616,14 +628,15 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
                 }
             ]
         }
-        monthlyReports[monthReportIndex].details.push(newReport)
+        monthlyReportsLocals.push(newReport)
+        localStorage.setItem("monthlyReports",JSON.stringify(monthlyReportsLocals))
     }
 }
 
 // hàm kiểm tra số chi tiêu có vượt quá ngân sách không
 const spendingStatisticsCheck = (monthValue) => {
-    const monthCategoriesItem = monthlyCategories.find((element) => element.month === monthValue)
-    const monthlyReportsItem = monthlyReports.find((element) => element.month === monthValue)
+    const monthCategoriesItem = monthlyCategoriesLocals.find((element) => element.month === monthValue)
+    const monthlyReportsItem = monthlyReportsLocals.find((element) => element.month === monthValue)
     const sum = monthlyReportsItem.details.reduce((total, report) => total + report.amount, 0);
     monthlyReportsItem.totalAmount = sum
     if (sum < monthCategoriesItem.budget ) {
@@ -636,7 +649,7 @@ const spendingStatisticsCheck = (monthValue) => {
 
 const monthlySpendingStatistics = () => {
     statisticsSpendingBodyElement.innerHTML = ""
-    const htmls = monthlyReports.map((element)=> {
+    const htmls = monthlyReportsLocals.map((element)=> {
         const monthCategoriesItem = monthlyCategories.find((item) => item.month === element.month)
         spendingStatisticsCheck(element.month)
         return`
@@ -653,7 +666,7 @@ const monthlySpendingStatistics = () => {
 const firstRender = (index,monthValue) => {
         if (index !== -1) {
             // render dữ liệu vào phần tiền còn lại
-            remainAmountElement.textContent = `${monthlyCategories[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+            remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
             // render dữ liệu vào phần quản lí danh mục
             renderCategoriesData(monthValue)    
             // render dữ liệu vào trong phần option
@@ -669,7 +682,7 @@ const firstRender = (index,monthValue) => {
             historyListElement.innerHTML = "";
             paginationElement.innerHTML = "";
         }
-    }
+}
     
     // hàm sẽ lấy ra ngày hôm nay và render ra dữ liệu của ngày hôm nay
 const load = () => {
@@ -690,9 +703,11 @@ const load = () => {
         firstRender(index,monthValue)
         monthlySpendingStatistics()
     }
+    saveLocals()
 }
 
 // CÁC EVENT KHI THAO TÁC VÀ SỰ KIỆN SẼ CHẠY KHI VỪA VÀO WEB
+budgetInputElement.textContent = "0 VND"
 load()
 
 // bắt đầu vào web thì sẽ cập nhật monthValue = ngày hôm nay
@@ -700,17 +715,17 @@ load()
 // bắt đầu vào web sẽ render thống kê chi tiêu các tháng
 
 // Nhập ngày tháng, nhập ngân sách , in ra màn hình số ngân sách còn lại của tháng đó
-remainAmountElement.textContent = "0 VND"
 saveButtonElement.addEventListener("click", (event) => {
     event.preventDefault()
     const monthValue = monthInputElement.value
     const budgetValue = budgetInputElement.value.trim()
     validateMonth()
     validateBudget()
-    const index = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     if (index !== -1) {
-        monthlyCategories[index].budget = +(budgetValue)
-        remainAmountElement.textContent = `${monthlyCategories[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+        monthlyCategoriesLocals[index].budget = +(budgetValue)
+        monthlyCategoriesLocals[index].remainMoney = +(budgetValue)
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         monthInputElement.value = ""
         return
     }
@@ -719,24 +734,28 @@ saveButtonElement.addEventListener("click", (event) => {
         {
             month : monthValue,
             budget:+(budgetValue),
+            remainMoney: +(budgetValue),
             categories: []
         }
-        monthlyCategories.push(newCategories)
-        remainAmountElement.textContent = `${monthlyCategories[monthlyCategories.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
-        monthInputElement.value = ""
+        monthlyCategoriesLocals.push(newCategories)
+        localStorage.setItem("monthlyCategories",JSON.stringify(monthlyCategoriesLocals))
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[monthlyCategoriesLocals.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
     }
+    console.log(monthValue);
+    
 })
+
 // Khi đổi tháng thì dữ liệu sẽ được render theo tháng đấy (Quản lí danh mục, số tiền còn lại, lịch sử giao dịch)
 monthInputElement.addEventListener("change", (event) => {
     event.preventDefault()
     monthInputElement.classList.remove("active")
     remainAmountElement.textContent = "0 VND"
     const monthValue = monthInputElement.value
-    const index = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     // Nếu tháng đấy tồn tại thì render ra dữ liệu tháng đó
     if (index !== -1) {
         // render dữ liệu vào phần tiền còn lại
-        remainAmountElement.textContent = `${monthlyCategories[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         // render dữ liệu vào phần quản lí danh mục
         renderCategoriesData(monthValue)    
         // render dữ liệu vào trong phần option
@@ -753,8 +772,8 @@ monthInputElement.addEventListener("change", (event) => {
         paginationElement.innerHTML = "";
     }
     monthlySpendingStatistics()
+    saveLocals()
 })
-
 
 // Thêm danh mục
 addCategoryElement.addEventListener("click" , (event) => {
@@ -771,13 +790,13 @@ addCategoryElement.addEventListener("click" , (event) => {
         categoryNameInputElement.classList.add("active")
         return
     }
-    if (limitValue.length === 0) {
+    if (limitValue.length === 0 || limitValue < 0) {
         limitInputElement.classList.add("active")
         return
     }
     if (editIndex >= 0) {
-        monthlyCategories[editCategoryIndex].categories[editIndex].name = categoryNameValue;
-        monthlyCategories[editCategoryIndex].categories[editIndex].limit = limitValue;
+        monthlyCategoriesLocals[editCategoryIndex].categories[editIndex].name = categoryNameValue;
+        monthlyCategoriesLocals[editCategoryIndex].categories[editIndex].limit = limitValue;
         // Reset lại trạng thái
         editIndex = -1; 
         editCategoryIndex = -1;
@@ -792,6 +811,7 @@ addCategoryElement.addEventListener("click" , (event) => {
     limitInputElement.value = ""
     renderCategoriesData(monthValue)
     renderOption(monthValue)
+    saveLocals()
 })
 
 // Thêm chi tiêu
@@ -804,9 +824,9 @@ addSpendingElement.addEventListener("click" ,(event) => {
     const spendingMoneyValue = spendingMoneyInputElement.value.trim()
     const spendingOptionValue = spendingOptionElement.value
     const spendingNoteValue = spendingNoteInputElement.value.trim()
-    const index = transactions.findIndex((transaction) => transaction.month === monthValue)
+    const index = transactionsLocals.findIndex((transaction) => transaction.month === monthValue)
     spendingMoneyInputElement.classList.remove("active")
-    if (spendingMoneyValue.length === 0) {
+    if (spendingMoneyValue.length === 0 || spendingMoneyValue < 0) {
         spendingMoneyInputElement.classList.add("active")
         return
     }
@@ -816,6 +836,7 @@ addSpendingElement.addEventListener("click" ,(event) => {
     currentPage = 1;
     renderPaginatedHistory(currentPage);
     budgetWarning(monthValue)
+    saveLocals()
 })
 
 // nút tìm kiếm sản phẩm trong lịch sử giao dịch

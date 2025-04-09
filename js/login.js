@@ -37,15 +37,24 @@ loginButtonElement.addEventListener("click",(event) => {
         });
         return
     }
-    Swal.fire({
-    title: "Đăng nhập thành công",
-    icon: "success"
-    }).then((result) => {
-    if (result.isConfirmed) {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+      Toast.fire({
+        icon: "success",
+        title: "Đăng nhập thành công"
+      }).then(() => {
         userLocals[index].rememberLogin = 1;
         window.location = "../pages/home.html"
-    }
-    });
+        });
     
 })
 
