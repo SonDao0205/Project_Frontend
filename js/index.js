@@ -20,28 +20,6 @@ const monthlyCategories = [
                 limit:30000
             }
         ]
-    },
-    {
-        month : "2025-04",
-        budget:2000000,
-        remainMoney: 2000000,
-        categories: [
-            {
-                id:4,
-                name:"Mua sắm",
-                limit:10000
-            },
-            {
-                id:5,
-                name:"Giải trí",
-                limit:20000
-            },
-            {
-                id:6,
-                name:"Ăn uống",
-                limit:30000
-            }
-        ]
     }
 ]
 
@@ -62,22 +40,8 @@ const transactions = [
                 amount:50000,
             }
         ]
-    },
-    {
-        month:"2025-04",
-        transaction:[
-            {
-                id:3,
-                month : "2025-04",
-                categoryId:4,
-                note:"hihi",
-                amount:50000,
-            }
-        ]
     }
-        
-        
-        
+   
 ]
 
 const monthlyReports = [
@@ -92,16 +56,6 @@ const monthlyReports = [
             {
                 categoryId:3,
                 amount:50000
-            }
-        ]
-    },
-    {
-        month:"2025-04",
-        totalAmount:120000,
-        details : [
-            {
-                categoryId:4,
-                amount:120000
             }
         ]
     }
@@ -178,19 +132,20 @@ openModalLogOutElement.addEventListener("click",(event)=>{
 
 // Hàm kiểm tra đã nhập thời gian chưa
 const validateMonth = () => {
-    const monthValue = monthInputElement.value
-    if (monthValue.length === 0) {
+    const monthValue = monthInputElement.value.trim()
+    if (!monthValue) {
         monthInputElement.classList.add("active")
-        return true
-    }
-}
-// Hàm chỉ dùng khi tạo 1 mảng mới để kiểm tra xem mảng đó đã nhập ngân sách chưa
-const validateBudget = () => {
-    const budgetValue = budgetInputElement.value.trim()
-    if (budgetValue.length === 0 || budgetValue < 0) {
-        budgetInputElement.classList.add("active")
         return
     }
+}
+
+const validateBudget = () => {
+    const budgetValue = budgetInputElement.value.trim()
+    if (!budgetValue || budgetValue < 0) {
+        budgetInputElement.classList.add("active")
+        return false;
+    }
+    return true;
 }
 
 // Hàm render ra dữ liệu của phần quản lý danh mục theo tháng
@@ -242,6 +197,7 @@ const handleDeleteCategory = (index,categoryIndex,monthValue) => {
     monthlyCategoriesLocals[categoryIndex].categories.splice(index,1)
     renderCategoriesData(monthValue)
     renderOption(monthValue)
+    saveLocals()
     const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
     handleDeleteHistory(index,historyIndex,monthValue)
     currentPage = 1;
@@ -261,6 +217,14 @@ const handleEditCategory = (index,categoryIndex) => {
 // Hàm thêm phần tử vào mảng : nếu như nhập thời gian đã tồn tại thì thêm vào mảng của thời gian đó, nếu nhập thời gian mới thì tạo ra mảng mới
 const addCategory = (monthValue,categoryNameValue,limitValue) => {
     const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    if (checkLimit(monthValue, limitValue)) {
+        Swal.fire({
+            title: "Lỗi!",
+            text: "Số tiền giới hạn của danh mục vượt quá ngân sách đã cho!",
+            icon: "error"
+        });
+        return;
+    }
     if (index !== -1) {
         const newCategories = {
             id:Math.floor(Math.random() * 99),
@@ -305,9 +269,12 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
                 }
             ]
         }
+        if (remainMoney(monthValue, +spendingMoneyValue)) {
+            return;
+        }        
+        addReport(monthValue,newTransaction.transaction[0].categoryId,newTransaction.transaction[0].amount)
         transactionsLocals.push(newTransaction)
         saveLocals()
-        addReport(monthValue,newTransaction.transaction[0].categoryId,newTransaction.transaction[0].amount)
     }
     else{
         const newTransaction = {
@@ -316,10 +283,14 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
             note:spendingNoteValue,
             amount:+(spendingMoneyValue),
         }
+        if (remainMoney(monthValue, +spendingMoneyValue)) {
+            return;
+        }        
+        addReport(monthValue,newTransaction.categoryId,newTransaction.amount)
         transactionsLocals[index].transaction.push(newTransaction)
         saveLocals()
-        addReport(monthValue,newTransaction.categoryId,newTransaction.amount)
     }
+    budgetWarning(monthValue);
 }
 
 // render dữ liệu của option trong phần thêm chi tiêu
@@ -343,7 +314,10 @@ const renderHistory = () => {
     if (historyIndex !== -1) {
         const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
-                const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId)
+                const category = monthlyCategoriesLocals[categoryIndex]?.categories.find((category) => category.id === transaction.categoryId);
+                if (!category){
+                     return "";
+                    }
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
@@ -381,12 +355,32 @@ const renderHistory = () => {
         })
     });
 }
+
 // Hàm xoá lịch sử giao dịch
-const handleDeleteHistory = (index, historyIndex,monthValue) => {
-    transactionsLocals[historyIndex].transaction.splice(index, 1)
-    renderHistory()
-    budgetWarning(monthValue)
-}
+const handleDeleteHistory = (index, historyIndex, monthValue) => {
+    if (!transactionsLocals[historyIndex] || !transactionsLocals[historyIndex].transaction[index]) {
+        return; 
+    }
+    const monthReportIndex = monthlyReportsLocals.findIndex((element) => element.month === monthValue);
+    const transactionAmount = transactionsLocals[historyIndex].transaction[index].amount;
+    // cập nhật lại totalAmount
+    if (monthReportIndex !== -1) {
+        monthlyReportsLocals[monthReportIndex].totalAmount -= transactionAmount;
+    }
+
+    // Cập nhật lại remainMoney
+    const monthCategoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue);
+    if (monthCategoryIndex !== -1) {
+        monthlyCategoriesLocals[monthCategoryIndex].remainMoney += transactionAmount;
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[monthCategoryIndex].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
+    }
+    // Xóa 
+    transactionsLocals[historyIndex].transaction.splice(index, 1);
+    saveLocals();
+    renderHistory();
+    budgetWarning(monthValue);
+    monthlySpendingStatistics();
+};
 
 // Tìm kiếm lịch sử giao dịch
 const searchHistory = (searchHistoryValue) => {
@@ -443,7 +437,7 @@ const sortHistory = (sortValue) => {
     const monthValue = monthInputElement.value
     historyListElement.innerHTML = ""
     const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
-    const categoryIndex = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     if (sortValue == 1) {
         transactionsLocals[historyIndex].transaction.sort((a, b) => b.amount - a.amount);
     } else if (sortValue == 2) {
@@ -453,7 +447,7 @@ const sortHistory = (sortValue) => {
     if (historyIndex !== -1) {
         const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
-                const category = monthlyCategories[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
+                const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
@@ -619,12 +613,13 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
             amount:categoryAmount
         }
         monthlyReportsLocals[monthReportIndex].details.push(newReport)
+        monthlyReportsLocals[monthReportIndex].totalAmount += categoryAmount;
         saveLocals()
     }
     else{
         const newReport = {
             month:monthValue,
-            totalAmount:0,
+            totalAmount:categoryAmount,
             details : [
                 {
                     categoryId:categoryId,
@@ -640,16 +635,16 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
 
 // hàm kiểm tra số chi tiêu có vượt quá ngân sách không
 const spendingStatisticsCheck = (monthValue) => {
-    const monthCategoriesItem = monthlyCategoriesLocals.find((element) => element.month === monthValue)
-    const monthlyReportsItem = monthlyReportsLocals.find((element) => element.month === monthValue)
+    const monthCategoriesItem = monthlyCategoriesLocals.find((element) => element.month === monthValue);
+    const monthlyReportsItem = monthlyReportsLocals.find((element) => element.month === monthValue);
+
+    if (!monthlyReportsItem || !monthlyReportsItem.details || !monthCategoriesItem) {
+        return false; 
+    }
+
     const sum = monthlyReportsItem.details.reduce((total, report) => total + report.amount, 0);
-    monthlyReportsItem.totalAmount = sum
-    if (sum < monthCategoriesItem.budget ) {
-        return true
-    }
-    else{
-        return false
-    }
+    monthlyReportsItem.totalAmount = sum;
+    return sum < monthCategoriesItem.budget;
 }
 
 const monthlySpendingStatistics = () => {
@@ -671,7 +666,7 @@ const monthlySpendingStatistics = () => {
 const firstRender = (index,monthValue) => {
         if (index !== -1) {
             // render dữ liệu vào phần tiền còn lại
-            remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+            remainAmountElement.textContent = `${monthlyCategoriesLocals[index].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
             // render dữ liệu vào phần quản lí danh mục
             renderCategoriesData(monthValue)    
             // render dữ liệu vào trong phần option
@@ -701,16 +696,68 @@ const load = () => {
     monthInputElement.value = year + "-" + month
     const monthValue = year + "-" + month
     
-    const index = monthlyCategories.findIndex((element) => element.month === monthValue)
+    const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     
     remainAmountElement.textContent = "0 VND"
     // Nếu tháng đấy tồn tại thì render ra dữ liệu tháng đó
     if (index !== -1) {
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         firstRender(index,monthValue)
         monthlySpendingStatistics()
     }
+    
     saveLocals()
 }
+
+// hàm xử lý số tiền còn lại
+const remainMoney = (monthValue, amount) => {
+    const categoriesIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue);
+    if (categoriesIndex === -1) return true;
+
+    const remain = monthlyCategoriesLocals[categoriesIndex].remainMoney;
+
+    const total = remain - amount;
+
+    if (total < 0) {
+        Swal.fire({
+            title: "Lỗi!",
+            text: "Số tiền còn lại không đủ để chi tiêu!",
+            icon: "error"
+        });
+        remainAmountElement.textContent = `${remain.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
+        return true;
+    } else {
+        monthlyCategoriesLocals[categoriesIndex].remainMoney = total;
+        saveLocals();
+        remainAmountElement.textContent = `${total.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
+        return false;
+    }
+}
+
+// kiểm tra nếu giới hạn tiền của danh mục vượt quá số ngân sách
+const checkLimit = (monthValue, newLimit) => {
+    const categoryIndex = monthlyCategoriesLocals.findIndex((item) => item.month === monthValue);
+    if (categoryIndex === -1) return false;
+
+    const currentMonth = monthlyCategoriesLocals[categoryIndex];
+
+    // Tính tổng limit hiện tại
+    let currentTotalLimit = 0;
+    for (let i = 0; i < currentMonth.categories.length; i++) {
+        currentTotalLimit += +(currentMonth.categories[i].limit);
+    }
+
+    // Tổng sau khi thêm mới
+    const total = currentTotalLimit + +(newLimit);
+
+    // So sánh với ngân sách và tiền còn lại
+    if (total > currentMonth.budget || total > currentMonth.remainMoney) {
+        return true; // vượt giới hạn
+    }
+
+    return false; // hợp lệ
+}
+
 
 // load dữ liệu của tháng hiện tại và render dữ liệu của tháng đó
 budgetInputElement.textContent = "0 VND"
@@ -729,7 +776,7 @@ saveButtonElement.addEventListener("click", (event) => {
     if (index !== -1) {
         monthlyCategoriesLocals[index].budget = +(budgetValue)
         monthlyCategoriesLocals[index].remainMoney = +(budgetValue)
-        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
     }
     else{
         const newCategories = 
@@ -740,7 +787,7 @@ saveButtonElement.addEventListener("click", (event) => {
             categories: []
         }
         monthlyCategoriesLocals.push(newCategories)
-        remainAmountElement.textContent = `${monthlyCategoriesLocals[monthlyCategoriesLocals.length-1].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[monthlyCategoriesLocals.length-1].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
     }
     budgetInputElement.value = ""
     saveLocals()
@@ -758,7 +805,7 @@ monthInputElement.addEventListener("change", (event) => {
     // Nếu tháng đấy tồn tại thì render ra dữ liệu tháng đó
     if (index !== -1) {
         // render dữ liệu vào phần tiền còn lại
-        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].budget.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
+        remainAmountElement.textContent = `${monthlyCategoriesLocals[index].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         // render dữ liệu vào phần quản lí danh mục
         renderCategoriesData(monthValue)    
         // render dữ liệu vào trong phần option
@@ -820,9 +867,7 @@ addCategoryElement.addEventListener("click" , (event) => {
 // Thêm chi tiêu
 addSpendingElement.addEventListener("click" ,(event) => {
     event.preventDefault()
-    if (validateMonth()) {
-        return
-    }
+    validateMonth()
     const monthValue = monthInputElement.value
     const spendingMoneyValue = spendingMoneyInputElement.value.trim()
     const spendingOptionValue = spendingOptionElement.value
