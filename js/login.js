@@ -50,7 +50,7 @@ loginButtonElement.addEventListener("click",(event) => {
       });
       Toast.fire({
         icon: "success",
-        title: "Đăng nhập thành công"
+        title: "Đăng Nhập Thành Công"
       }).then(() => {
         userLocals[index].rememberLogin = 1;
         window.location = "../pages/home.html"

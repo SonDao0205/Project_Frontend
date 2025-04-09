@@ -62,13 +62,22 @@ registerButtonElement.addEventListener("click",(event) => {
     }
     userLocals.push(newUsers)
     localStorage.setItem("users",JSON.stringify(userLocals))
-    Swal.fire({
-        title: "Đăng ký tài khoản thành công",
-        icon: "success"
-        }).then((result) => {
-        if (result.isConfirmed) {
-            window.location = "../pages/login.html"
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
         }
+        });
+        Toast.fire({
+        icon: "success",
+        title: "Đăng Ký Thành Công"
+        }).then(() => {
+        window.location = "../pages/login.html"
         });
     
 })
