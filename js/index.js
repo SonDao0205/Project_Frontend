@@ -1,4 +1,3 @@
-// localStorage.clear()
 const monthlyCategories = [
     {
         month : "2025-03",
