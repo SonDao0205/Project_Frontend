@@ -852,7 +852,7 @@ addSpendingElement.addEventListener("click" ,(event) => {
     const spendingNoteValue = spendingNoteInputElement.value.trim()
     const index = transactionsLocals.findIndex((transaction) => transaction.month === monthValue)
     spendingMoneyInputElement.classList.remove("active")
-    if (spendingMoneyValue.length === 0 || spendingMoneyValue < 0) {
+    if (spendingMoneyValue.length === 0 || spendingMoneyValue < 0 || isNaN(spendingMoneyValue)) {
         spendingMoneyInputElement.classList.add("active")
         return
     }
