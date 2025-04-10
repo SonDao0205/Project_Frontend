@@ -17,24 +17,8 @@ loginButtonElement.addEventListener("click",(event) => {
     event.preventDefault()
     const passwordValue = passwordInputElement.value
     const usernameValue = usernameInputElement.value
-    // kiểm tra sự hợp lệ của thông tin
-    if(usernameValue.length === 0){
-        errorEmptyElement[0].style.display = "block"
-        usernameInputElement.style.border = "1px solid red"
-        if (passwordValue.length === 0) {
-            errorEmptyElement[1].style.display = "block"
-            passwordInputElement.style.border = "1px solid red"
-        }
-        return
-    }
-    // kiểm tra sự tồn tại
     const index = userLocals.findIndex(user => user.username === usernameValue && user.password === passwordValue);
-    if (index === -1) {
-        errorIncorrectElement.forEach(element => {
-            element.style.display = "block"
-            usernameInputElement.style.border = "1px solid red"
-            passwordInputElement.style.border = "1px solid red"
-        });
+    if (errorEnable(usernameValue,passwordValue,index)) {
         return
     }
     const Toast = Swal.mixin({
@@ -67,4 +51,46 @@ const errorDisable = () => {
     errorIncorrectElement.forEach(element => {
         element.style.display = "none"
     });
+}
+
+const errorEnable = (usernameValue,passwordValue,index) => {
+    if(usernameValue.length === 0){
+        usernameInputElement.style.border = "1px solid red"
+        errorEmptyElement[0].style.display = "block"
+        errorAlert()
+        if (passwordValue.length === 0) {
+            passwordInputElement.style.border = "1px solid red"
+            errorEmptyElement[1].style.display = "block"
+            errorAlert()
+        }
+        return true
+    }
+    if (index === -1) {
+        usernameInputElement.style.border = "1px solid red"
+        passwordInputElement.style.border = "1px solid red"
+        errorIncorrectElement.forEach(element => {
+                    element.style.display = "block"
+        })
+        errorAlert()
+        return true
+    }
+    return false
+}
+
+const errorAlert = () => {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+      Toast.fire({
+        icon: "error",
+        title: "Đăng Nhập Thất Bại",
+      })
 }

@@ -19,38 +19,10 @@ registerButtonElement.addEventListener("click",(event) => {
     const passwordValue = passwordInputElement.value
     const usernameValue = usernameInputElement.value
     const confirmPasswordValue = confirmPasswordInputElement.value
-    // kiểm tra độ hợp lệ của thông tin
-    if (usernameValue.length === 0) {
-        errorEmptyElement[0].style.display = "block"
-        usernameInputElement.style.border = "1px solid red"
-        return
-    }
-    if (passwordValue.length === 0) {
-        errorEmptyElement[1].style.display = "block"
-        passwordInputElement.style.border = "1px solid red"
-        return
-    }
-    if (confirmPasswordValue.length === 0) {
-        errorEmptyElement[2].style.display = "block"
-        confirmPasswordInputElement.style.border = "1px solid red"
-        return
-    }
-    if (!validatePassword(passwordValue)) {
-        errorElement[1].style.display = "block"
-        passwordInputElement.style.border = "1px solid red"
-        return
-    }
-    if (passwordValue !== confirmPasswordValue) {
-        errorElement[2].style.display = "block"
-        confirmPasswordInputElement.style.border = "1px solid red"
-        return
-    }
-    // kiểm tra sự tồn tại
+    // kiểm tra độ hợp lệ của thông tin nhập vào và kiểm tra sự tồn tại
     const user = userLocals.find(user => user.username === usernameValue);
-    if (user) {
-        errorElement[0].style.display = "block"
-        usernameInputElement.style.border = "1px solid red"
-        return;
+    if (errorEnable(usernameValue,passwordValue,confirmPasswordValue,user)) {
+        return
     }
     errorDisable()
     // thêm tài khoản vào local
@@ -94,3 +66,60 @@ const errorDisable = () => {
     });
 }
 
+const errorEnable = (usernameValue,passwordValue,confirmPasswordValue,user) => {
+    if (usernameValue.length === 0) {
+        errorEmptyElement[0].style.display = "block"
+        usernameInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    if (passwordValue.length === 0) {
+        errorEmptyElement[1].style.display = "block"
+        passwordInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    if (confirmPasswordValue.length === 0) {
+        errorEmptyElement[2].style.display = "block"
+        confirmPasswordInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    if (!validatePassword(passwordValue)) {
+        errorElement[1].style.display = "block"
+        passwordInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    if (passwordValue !== confirmPasswordValue) {
+        errorElement[2].style.display = "block"
+        confirmPasswordInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    if (user) {
+        errorElement[0].style.display = "block"
+        usernameInputElement.style.border = "1px solid red"
+        errorAlert()
+        return true
+    }
+    return false
+}
+
+const errorAlert = () => {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1000,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+      Toast.fire({
+        icon: "error",
+        title: "Đăng Ký Thất Bại",
+      })
+      return true
+}

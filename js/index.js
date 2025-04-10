@@ -321,7 +321,7 @@ const renderHistory = () => {
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
-                    <p class="function"><span class="deleteHistory">Xoá</span></p>
+                    <p class="function" ><span class="deleteHistory">Xoá</span></p>
                 </li>`
             }
         })
@@ -366,6 +366,10 @@ const handleDeleteHistory = (index, historyIndex, monthValue) => {
     // cập nhật lại totalAmount
     if (monthReportIndex !== -1) {
         monthlyReportsLocals[monthReportIndex].totalAmount -= transactionAmount;
+        const reportIndex = monthlyReportsLocals[monthReportIndex].details.findIndex((element) => element.categoryId === transactionsLocals[historyIndex].transaction[index].categoryId);
+        if (reportIndex !== -1) {
+            monthlyReportsLocals[monthReportIndex].details.splice(reportIndex, 1);
+        }
     }
 
     // Cập nhật lại remainMoney
@@ -482,7 +486,7 @@ const sortHistory = (sortValue) => {
     });
 }
 
-// Hàm render lịch sử giao dịch với phân trang
+// Hàm render lịch sử giao dịch với nút phân trang
 const renderPaginatedHistory = (page) => {
     const monthValue = monthInputElement.value;
     historyListElement.innerHTML = "";
@@ -636,19 +640,31 @@ const addReport = (monthValue,categoryId,categoryAmount) => {
 // hàm kiểm tra số chi tiêu có vượt quá ngân sách không
 const spendingStatisticsCheck = (monthValue) => {
     const monthCategoriesItem = monthlyCategoriesLocals.find((element) => element.month === monthValue);
-    const monthlyReportsItem = monthlyReportsLocals.find((element) => element.month === monthValue);
-
+    const monthlyReportsItem = monthlyReportsLocals.find((element) => element.month === monthValue);    
     if (!monthlyReportsItem || !monthlyReportsItem.details || !monthCategoriesItem) {
         return false; 
     }
-
     const sum = monthlyReportsItem.details.reduce((total, report) => total + report.amount, 0);
     monthlyReportsItem.totalAmount = sum;
-    return sum < monthCategoriesItem.budget;
+
+    if (sum < monthCategoriesItem.budget) {
+        return true
+    }
+    return false
 }
 
 const monthlySpendingStatistics = () => {
     statisticsSpendingBodyElement.innerHTML = ""
+    // tìm xem có tháng nào tổng chi tiêu = 0 thì sẽ không render tháng đó ra
+    monthlyReportsLocals.forEach(element => {
+        if (element.totalAmount == 0) {
+            const index = monthlyReportsLocals.findIndex((item) => item.month === element.month);
+            if (index !== -1) {
+                monthlyReportsLocals.splice(index, 1);
+                saveLocals()
+            }
+        }
+    });
     const htmls = monthlyReportsLocals.map((element)=> {
         const monthCategoriesItem = monthlyCategoriesLocals.find((item) => item.month === element.month)
         spendingStatisticsCheck(element.month)
@@ -699,13 +715,12 @@ const load = () => {
     const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     
     remainAmountElement.textContent = "0 VND"
+    monthlySpendingStatistics()
     // Nếu tháng đấy tồn tại thì render ra dữ liệu tháng đó
     if (index !== -1) {
         remainAmountElement.textContent = `${monthlyCategoriesLocals[index].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`
         firstRender(index,monthValue)
-        monthlySpendingStatistics()
     }
-    
     saveLocals()
 }
 
