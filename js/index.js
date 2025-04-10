@@ -1,3 +1,4 @@
+// localStorage.clear()
 const monthlyCategories = [
     {
         month : "2025-03",
@@ -144,17 +145,18 @@ const validateMonth = () => {
     const monthValue = monthInputElement.value.trim()
     if (!monthValue) {
         monthInputElement.classList.add("active")
-        return
+        return false
     }
+    return true
 }
 
 const validateBudget = () => {
     const budgetValue = budgetInputElement.value.trim()
-    if (!budgetValue || budgetValue < 0) {
+    if (!budgetValue || budgetValue < 0 || isNaN(budgetValue)){
         budgetInputElement.classList.add("active")
-        return false;
+        return false
     }
-    return true;
+    return true
 }
 
 // Hàm render ra dữ liệu của phần quản lý danh mục theo tháng
@@ -245,7 +247,9 @@ const addCategory = (monthValue,categoryNameValue,limitValue) => {
         return
     }
     else{
-        validateBudget()
+        if (!validateBudget()) {
+            return
+        }
         const newCategories = 
         {
             month : monthValue,
@@ -359,20 +363,42 @@ const searchHistory = (searchHistoryValue) => {
                     return `
                     <li>
                         <p>${category.name} - <span>${transaction.note}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
-                        <p class="function"><span class="deleteHistory">Xoá</span></p>
+                        <p class="function" onclick ="getHistoryIndex(${transaction.id})"><span class="deleteHistory">Xoá</span></p>
                     </li>`    
                 }
             }
         })
+        let flag = 0
+        for (let i = 0; i < htmls.length; i++) {
+            if (htmls[i] !== undefined) {
+                flag = 1
+                break
+            }    
+        }
+        if (flag === 0) {
+            Swal.fire({
+                title: "Tìm kiếm thất bại!",
+                text: "Không tìm thấy nội dung tương ứng!",
+                icon: "error"
+            });
+            currentPage = 1
+            renderPaginatedHistory(currentPage)
+            return
+        }
         historyListElement.innerHTML = htmls.join("")
     }
     else{
+        Swal.fire({
+            title: "Tìm kiếm thất bại!",
+            text: "Không có dữ liệu để tìm kiếm!",
+            icon: "error"
+        });
         const htmls = []
         historyListElement.innerHTML = htmls.join("")
     }
     
-    const deleteHistoryElement = document.querySelectorAll(".deleteHistory")
-    deleteHistoryElement.forEach((button,index) => {
+    const deleteHistoryElement = document.querySelectorAll(".deleteHistory");
+    deleteHistoryElement.forEach((button, index) => {
         button.addEventListener("click", () => {
             Swal.fire({
                 title: "Bạn có chắc chắn muốn xoá mục này không",
@@ -391,7 +417,7 @@ const searchHistory = (searchHistoryValue) => {
                   handleDeleteHistory(index,historyIndex,monthValue)
                 }
               });
-        })
+        });
     });
 }
 
@@ -748,8 +774,9 @@ saveButtonElement.addEventListener("click", (event) => {
     event.preventDefault()
     const monthValue = monthInputElement.value
     const budgetValue = budgetInputElement.value.trim()
-    validateMonth()
-    validateBudget()
+    if (!validateMonth() || !validateBudget()) {
+        return
+    }
     const index = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
     if (index !== -1) {
         monthlyCategoriesLocals[index].budget = +(budgetValue)
@@ -806,7 +833,7 @@ monthInputElement.addEventListener("change", (event) => {
 // Thêm danh mục
 addCategoryElement.addEventListener("click" , (event) => {
     event.preventDefault()
-    if (validateMonth()) {
+    if (!validateMonth()) {
         return
     }
     categoryNameInputElement.classList.remove("active")
@@ -845,7 +872,9 @@ addCategoryElement.addEventListener("click" , (event) => {
 // Thêm chi tiêu
 addSpendingElement.addEventListener("click" ,(event) => {
     event.preventDefault()
-    validateMonth()
+    if (!validateMonth()) {
+        return
+    }
     const monthValue = monthInputElement.value
     const spendingMoneyValue = spendingMoneyInputElement.value.trim()
     const spendingOptionValue = spendingOptionElement.value
@@ -880,8 +909,9 @@ submitHistoryButtonElement.addEventListener("click",(event) => {
 // sắp xếp lịch sử giao dịch theo giá
 sortElement.addEventListener("change",(event) => {
     event.preventDefault()
-    validateMonth()
+    if (!validateMonth()) {
+        return
+    }
     const sortValue = sortElement.value
     sortHistory(sortValue)
 })
-
