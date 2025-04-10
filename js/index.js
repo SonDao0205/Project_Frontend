@@ -818,7 +818,7 @@ addCategoryElement.addEventListener("click" , (event) => {
         categoryNameInputElement.classList.add("active")
         return
     }
-    if (limitValue.length === 0 || limitValue < 0) {
+    if (limitValue.length === 0 || limitValue < 0 || isNaN(limitValue)) {
         limitInputElement.classList.add("active")
         return
     }
