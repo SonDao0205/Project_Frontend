@@ -8,7 +8,7 @@ const userLocals = JSON.parse(localStorage.getItem("users")) || []
 // Nếu tài khoản đã từng đăng nhập rồi thì từ lần sau truy cập sẽ không cần phải đăng nhập lại nữa
 if (userLocals.length > 0) {
     if (userLocals[userLocals.length - 1].rememberLogin) {
-        window.location = "../pages/home.html"
+        window.history.back()
     }    
 }
 

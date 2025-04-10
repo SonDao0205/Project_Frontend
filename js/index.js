@@ -71,6 +71,7 @@ const addCategoryElement = document.querySelector("#addCategory")
 const categoryListElement = document.querySelector("#categoryList")
 let editIndex = -1
 let editCategoryIndex = -1
+let transactionId;
 const spendingMoneyInputElement = document.querySelector("#spendingMoneyInput")
 const spendingOptionElement = document.querySelector("#spendingOption")
 const spendingNoteInputElement = document.querySelector("#spendingNoteInput")
@@ -93,6 +94,14 @@ const userLocals = JSON.parse(localStorage.getItem("users")) || []
 let monthlyCategoriesLocals = JSON.parse(localStorage.getItem("monthlyCategories")) || []
 let transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
 let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
+
+// nếu như chưa đăng nhập thì sẽ không thể vào được trang này
+if (userLocals.length === 0) {
+    window.history.back()
+}
+else if (userLocals[userLocals.length - 1].rememberLogin === 0) {    
+    window.history.back()
+}
 
 // Lưu dữ liệu vào localStorage
 const saveLocals = () => {
@@ -304,58 +313,6 @@ const renderOption = (monthValue) => {
     spendingOptionElement.innerHTML = htmls.join("")
 }
 
-// render lịch sử giao dịch
-const renderHistory = () => {
-    const monthValue = monthInputElement.value
-    historyListElement.innerHTML = ""
-    const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
-    const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
-    
-    if (historyIndex !== -1) {
-        const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
-            if (categoryIndex !== -1) {
-                const category = monthlyCategoriesLocals[categoryIndex]?.categories.find((category) => category.id === transaction.categoryId);
-                if (!category){
-                     return "";
-                    }
-                return `
-                <li>
-                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
-                    <p class="function" ><span class="deleteHistory">Xoá</span></p>
-                </li>`
-            }
-        })
-        historyListElement.innerHTML = htmls.join("")
-    }
-    else{
-        const htmls = []
-        historyListElement.innerHTML = htmls.join("")
-    }
-    
-    const deleteHistoryElement = document.querySelectorAll(".deleteHistory")
-    deleteHistoryElement.forEach((button,index) => {
-        button.addEventListener("click", () => {
-            Swal.fire({
-                title: "Bạn có chắc chắn muốn xoá mục này không",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Đúng, tôi chắc chắn muốn xoá",
-                cancelButtonText: "Huỷ"
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  Swal.fire({
-                    title: "Đã xoá thành công!",
-                    icon: "success"
-                  });
-                  handleDeleteHistory(index,historyIndex,monthValue)
-                }
-              });
-        })
-    });
-}
-
 // Hàm xoá lịch sử giao dịch
 const handleDeleteHistory = (index, historyIndex, monthValue) => {
     if (!transactionsLocals[historyIndex] || !transactionsLocals[historyIndex].transaction[index]) {
@@ -379,9 +336,11 @@ const handleDeleteHistory = (index, historyIndex, monthValue) => {
         remainAmountElement.textContent = `${monthlyCategoriesLocals[monthCategoryIndex].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
     }
     // Xóa 
-    transactionsLocals[historyIndex].transaction.splice(index, 1);
+    const transactionIndex = transactionsLocals[historyIndex].transaction.findIndex((element) => element.id === transactionId);
+    transactionsLocals[historyIndex].transaction.splice(transactionIndex, 1);
     saveLocals();
-    renderHistory();
+    currentPage = 1;
+    renderPaginatedHistory(currentPage);
     budgetWarning(monthValue);
     monthlySpendingStatistics();
 };
@@ -504,7 +463,7 @@ const renderPaginatedHistory = (page) => {
                 return `
                 <li>
                     <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
-                    <p class="function"><span class="deleteHistory">Xoá</span></p>
+                    <p class="function" onclick ="getHistoryIndex(${transaction.id})"><span class="deleteHistory">Xoá</span></p>
                 </li>`;
             }
         });
@@ -773,6 +732,10 @@ const checkLimit = (monthValue, newLimit) => {
     return false; // hợp lệ
 }
 
+// hàm lấy ra index của lịch sử giao dịch trong phần phân trang
+const getHistoryIndex = (id) => {
+    transactionId = id
+}
 
 // load dữ liệu của tháng hiện tại và render dữ liệu của tháng đó
 budgetInputElement.textContent = "0 VND"

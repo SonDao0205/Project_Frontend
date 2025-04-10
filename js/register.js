@@ -6,8 +6,12 @@ const errorElement = document.querySelectorAll(".error")
 const errorEmptyElement = document.querySelectorAll(".errorEmpty")
 const userLocals = JSON.parse(localStorage.getItem("users")) || [];
 if (userLocals.length > 0) {
+    if (userLocals[userLocals.length - 1].rememberLogin) {
+        window.history.back()
+    }    
     userLocals[userLocals.length - 1].rememberLogin = 0;
 }
+// Nếu tài khoản đã từng đăng nhập rồi thì từ lần sau truy cập sẽ không cần phải đăng nhập lại nữa
 const validatePassword = (passwordValue) => {
     const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/;
     return passwordRegex.test(passwordValue);
