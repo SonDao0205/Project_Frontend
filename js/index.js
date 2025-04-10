@@ -2,7 +2,7 @@ const monthlyCategories = [
     {
         month : "2025-03",
         budget:1000000,
-        remainMoney: 1000000,
+        remainMoney: 955000,
         categories: [
             {
                 id:1,
@@ -37,7 +37,7 @@ const transactions = [
                 id:2,
                 categoryId:3,
                 note:"hehe",
-                amount:50000,
+                amount:30000,
             }
         ]
     }
