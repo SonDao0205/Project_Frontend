@@ -7,7 +7,8 @@ const errorEmptyElement = document.querySelectorAll(".errorEmpty")
 const userLocals = JSON.parse(localStorage.getItem("users")) || [];
 if (userLocals.length > 0) {
     if (userLocals[userLocals.length - 1].rememberLogin) {
-        window.history.back()
+        window.location = "../pages/home.html"
+        return
     }    
     userLocals[userLocals.length - 1].rememberLogin = 0;
 }
