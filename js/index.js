@@ -97,10 +97,10 @@ let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) ||
 
 // nếu như chưa đăng nhập thì sẽ không thể vào được trang này
 if (userLocals.length === 0) {
-    window.location = "../pages/login.html"
+    window.history.back()
 }
 else if (userLocals[userLocals.length - 1].rememberLogin === 0) {    
-    window.location = "../pages/login.html"
+    window.history.back()
 }
 
 // Lưu dữ liệu vào localStorage
