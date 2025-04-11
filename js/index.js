@@ -2,7 +2,7 @@ const monthlyCategories = [
     {
         month : "2025-03",
         budget:1000000,
-        remainMoney: 1000000,
+        remainMoney: 955000,
         categories: [
             {
                 id:1,
@@ -37,7 +37,7 @@ const transactions = [
                 id:2,
                 categoryId:3,
                 note:"hehe",
-                amount:50000,
+                amount:30000,
             }
         ]
     }
@@ -55,7 +55,7 @@ const monthlyReports = [
             },
             {
                 categoryId:3,
-                amount:50000
+                amount:30000
             }
         ]
     }
@@ -96,10 +96,7 @@ let transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
 let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
 
 // nếu như chưa đăng nhập thì sẽ không thể vào được trang này
-if (userLocals.length === 0) {
-    window.location = "../pages/login.html"
-}
-else if (userLocals[userLocals.length - 1].rememberLogin === 0) {    
+if (userLocals.length === 0 || userLocals.every((element) => element.rememberLogin === 0)) {
     window.location = "../pages/login.html"
 }
 
@@ -132,7 +129,9 @@ openModalLogOutElement.addEventListener("click",(event)=>{
         cancelButtonText:"Huỷ"
       }).then((result) => {
         if (result.isConfirmed) {
-            userLocals[userLocals.length - 1].rememberLogin = 0
+            userLocals.forEach(element => {
+                element.rememberLogin = 0
+            });
             saveLocals()
             window.location = "../pages/login.html"
         }
@@ -221,7 +220,7 @@ const handleEditCategory = (index,categoryIndex) => {
     editIndex = index
     editCategoryIndex = categoryIndex
     categoryNameInputElement.value = monthlyCategoriesLocals[categoryIndex].categories[index].name
-    limitInputElement.value = monthlyCategoriesLocals[categoryIndex].categories[index].limit
+    limitInputElement.value = +(monthlyCategoriesLocals[categoryIndex].categories[index].limit)
 }
 
 // Hàm thêm phần tử vào mảng : nếu như nhập thời gian đã tồn tại thì thêm vào mảng của thời gian đó, nếu nhập thời gian mới thì tạo ra mảng mới
@@ -269,6 +268,15 @@ const addCategory = (monthValue,categoryNameValue,limitValue) => {
 
 // Thêm chi tiêu
 const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingNoteValue,index) => {
+    const monthlyCategoryItem = monthlyCategoriesLocals.find((category) => category.month === monthValue)
+    if (monthlyCategoryItem.categories.length === 0) {
+        Swal.fire({
+            title: "Lỗi!",
+            text: "Hãy thêm danh mục để chi tiêu!",
+            icon: "error"
+        });
+        return
+    }
     if (index === -1) {
         const newTransaction = {
             month: monthValue,
@@ -555,6 +563,9 @@ const budgetWarning = (monthValue) => {
     const monthCategoriesIndex = monthlyCategoriesLocals.findIndex(category => category.month === monthValue);
     const monthTransactionIndex = transactionsLocals.findIndex(transaction => transaction.month === monthValue);
     // lấy ra mảng tại thời gian đã tìm
+    if (transactionsLocals[monthTransactionIndex].transaction.length === 0 || !monthlyCategoriesLocals[monthCategoriesIndex].categories) {
+        return
+    }
     const currentTransaction = transactionsLocals[monthTransactionIndex].transaction;
     const currentCategory = monthlyCategoriesLocals[monthCategoriesIndex].categories;
 
@@ -674,6 +685,8 @@ const firstRender = (index,monthValue) => {
             // render dữ liệu vào phần lịch sử giao dịch
             currentPage = 1;
             renderPaginatedHistory(currentPage);
+            // render cảnh báo số tiền chi tiêu vượt quá giới hạn danh mục
+            budgetWarning(monthValue)
         }
         // Nếu tháng đấy không tồn tại thì render trống 
         else{
@@ -714,9 +727,7 @@ const remainMoney = (monthValue, amount) => {
     if (categoriesIndex === -1) return true;
 
     const remain = monthlyCategoriesLocals[categoriesIndex].remainMoney;
-
     const total = remain - amount;
-
     if (total < 0) {
         Swal.fire({
             title: "Lỗi!",
@@ -850,7 +861,7 @@ addCategoryElement.addEventListener("click" , (event) => {
     }
     if (editIndex >= 0) {
         monthlyCategoriesLocals[editCategoryIndex].categories[editIndex].name = categoryNameValue;
-        monthlyCategoriesLocals[editCategoryIndex].categories[editIndex].limit = limitValue;
+        monthlyCategoriesLocals[editCategoryIndex].categories[editIndex].limit = +(limitValue);
         // Reset lại trạng thái
         editIndex = -1; 
         editCategoryIndex = -1;
@@ -888,8 +899,7 @@ addSpendingElement.addEventListener("click" ,(event) => {
     spendingMoneyInputElement.value = ""
     spendingNoteInputElement.value = ""
     currentPage = 1;
-    renderPaginatedHistory(currentPage);
-    budgetWarning(monthValue)
+    renderPaginatedHistory(currentPage);    
     saveLocals()
 })
 
