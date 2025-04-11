@@ -96,11 +96,8 @@ let transactionsLocals = JSON.parse(localStorage.getItem("transactions")) || []
 let monthlyReportsLocals = JSON.parse(localStorage.getItem("monthlyReports")) || []
 
 // nếu như chưa đăng nhập thì sẽ không thể vào được trang này
-if (userLocals.length === 0) {
-    window.history.back()
-}
-else if (userLocals[userLocals.length - 1].rememberLogin === 0) {    
-    window.history.back()
+if (userLocals.length === 0 || userLocals.every((element) => element.rememberLogin === 0)) {
+    window.location = "../pages/login.html"
 }
 
 // Lưu dữ liệu vào localStorage
@@ -132,7 +129,9 @@ openModalLogOutElement.addEventListener("click",(event)=>{
         cancelButtonText:"Huỷ"
       }).then((result) => {
         if (result.isConfirmed) {
-            userLocals[userLocals.length - 1].rememberLogin = 0
+            userLocals.forEach(element => {
+                element.rememberLogin = 0
+            });
             saveLocals()
             window.location = "../pages/login.html"
         }

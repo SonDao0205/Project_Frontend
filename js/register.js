@@ -6,7 +6,7 @@ const errorElement = document.querySelectorAll(".error")
 const errorEmptyElement = document.querySelectorAll(".errorEmpty")
 const userLocals = JSON.parse(localStorage.getItem("users")) || [];
 if (userLocals.length > 0) {
-    if (userLocals[userLocals.length - 1].rememberLogin) {
+    if (userLocals.some((element) => element.rememberLogin === 1)) {
         window.location = "../pages/home.html"
     }    
     else{
