@@ -867,6 +867,7 @@ addCategoryElement.addEventListener("click" , (event) => {
         editCategoryIndex = -1;
         // Đổi lại nút thành Thêm
         addCategoryElement.textContent = "Thêm";
+        budgetWarning(monthValue)
         renderOption(monthValue)
     }
     else{
