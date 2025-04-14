@@ -146,15 +146,17 @@ const validateMonth = () => {
         monthInputElement.classList.add("active")
         return false
     }
+    monthInputElement.classList.remove("active")
     return true
 }
 
 const validateBudget = () => {
     const budgetValue = budgetInputElement.value.trim()
-    if (!budgetValue || budgetValue < 0 || isNaN(budgetValue)){
+    if (!budgetValue || budgetValue < 0 ){
         budgetInputElement.classList.add("active")
         return false
     }
+    budgetInputElement.classList.remove("active")
     return true
 }
 
@@ -162,6 +164,7 @@ const validateBudget = () => {
 const renderCategoriesData = (monthValue) => {
     categoryListElement.innerHTML = ""
     const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    if (categoryIndex === -1 ) return
     const htmls = monthlyCategoriesLocals[categoryIndex].categories.map((category) => {
         return `
             <li>
@@ -318,6 +321,7 @@ const addSpending = (monthValue,spendingMoneyValue,spendingOptionValue,spendingN
 const renderOption = (monthValue) => {
     spendingOptionElement.innerHTML = ""
     const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    if (categoryIndex === -1) return
     const htmls = monthlyCategoriesLocals[categoryIndex].categories.map((category) => {
         return `
         <option value="${category.id}">${category.name}</option>`
@@ -327,11 +331,14 @@ const renderOption = (monthValue) => {
 
 // Hàm xoá lịch sử giao dịch
 const handleDeleteHistory = (index, historyIndex, monthValue) => {
+    console.log(transactionId);
+    
     if (!transactionsLocals[historyIndex] || !transactionsLocals[historyIndex].transaction[index]) {
         return; 
     }
     const monthReportIndex = monthlyReportsLocals.findIndex((element) => element.month === monthValue);
     const transactionAmount = transactionsLocals[historyIndex].transaction[index].amount;
+    
     // cập nhật lại totalAmount
     if (monthReportIndex !== -1) {
         monthlyReportsLocals[monthReportIndex].totalAmount -= transactionAmount;
@@ -363,6 +370,10 @@ const searchHistory = (searchHistoryValue) => {
     historyListElement.innerHTML = ""
     const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
     const categoryIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue)
+    if (!searchHistoryValue) {
+        renderPaginatedHistory(1)
+        return
+    }
     if (historyIndex !== -1) {
         const htmls = transactionsLocals[historyIndex].transaction.map((transaction) => {
             if (categoryIndex !== -1) {
@@ -490,7 +501,7 @@ const renderPaginatedHistory = (page) => {
                 const category = monthlyCategoriesLocals[categoryIndex].categories.find((category) => category.id === transaction.categoryId);
                 return `
                 <li>
-                    <p>${category.name} - <span>${transaction.note ? transaction.note : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
+                    <p>${category.name} <span>${transaction.note ? `- ${transaction.note}` : ""}</span> : <span>${transaction.amount.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</span></p>
                     <p class="function" onclick ="getHistoryIndex(${transaction.id})"><span class="deleteHistory">Xoá</span></p>
                 </li>`;
             }
@@ -558,9 +569,7 @@ const budgetWarning = (monthValue) => {
     const monthCategoriesIndex = monthlyCategoriesLocals.findIndex(category => category.month === monthValue);
     const monthTransactionIndex = transactionsLocals.findIndex(transaction => transaction.month === monthValue);
     // lấy ra mảng tại thời gian đã tìm
-    if (transactionsLocals[monthTransactionIndex].transaction.length === 0 || !monthlyCategoriesLocals[monthCategoriesIndex].categories) {
-        return
-    }
+    if (monthCategoriesIndex === -1 || monthTransactionIndex === -1) return
     const currentTransaction = transactionsLocals[monthTransactionIndex].transaction;
     const currentCategory = monthlyCategoriesLocals[monthCategoriesIndex].categories;
 
@@ -720,15 +729,15 @@ const load = () => {
 // hàm xử lý số tiền còn lại
 const remainMoney = (monthValue, amount) => {
     const categoriesIndex = monthlyCategoriesLocals.findIndex((element) => element.month === monthValue);
-    if (categoriesIndex === -1) return true;
+    if (categoriesIndex === -1) return;
 
     const remain = monthlyCategoriesLocals[categoriesIndex].remainMoney;
     const total = remain - amount;
     if (total < 0) {
         Swal.fire({
-            title: "Lỗi!",
+            title: "Cảnh báo!",
             text: "Số tiền còn lại không đủ để chi tiêu!",
-            icon: "error"
+            icon: "warning"
         });
         remainAmountElement.textContent = `${remain.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
         return true;
@@ -851,7 +860,7 @@ addCategoryElement.addEventListener("click" , (event) => {
         categoryNameInputElement.classList.add("active")
         return
     }
-    if (limitValue.length === 0 || limitValue < 0 || isNaN(limitValue)) {
+    if (limitValue.length === 0 || limitValue < 0) {
         limitInputElement.classList.add("active")
         return
     }
@@ -888,7 +897,7 @@ addSpendingElement.addEventListener("click" ,(event) => {
     const spendingNoteValue = spendingNoteInputElement.value.trim()
     const index = transactionsLocals.findIndex((transaction) => transaction.month === monthValue)
     spendingMoneyInputElement.classList.remove("active")
-    if (spendingMoneyValue.length === 0 || spendingMoneyValue < 0 || isNaN(spendingMoneyValue)) {
+    if (spendingMoneyValue.length === 0 || spendingMoneyValue < 0) {
         spendingMoneyInputElement.classList.add("active")
         return
     }
@@ -910,6 +919,14 @@ submitHistoryButtonElement.addEventListener("click",(event) => {
         return
     }
     searchHistory(searchHistoryValue)
+})
+
+// nếu xoá hết dữ liệu trong ô tìm kiếm thì sẽ render ra lịch sử ban đầu
+searchHistoryInputElement.addEventListener("change", () => {
+    const searchHistoryValue = searchHistoryInput.value.trim()
+    if (!searchHistoryValue) {
+        searchHistory(searchHistoryValue)
+    }
 })
 
 // sắp xếp lịch sử giao dịch theo giá
