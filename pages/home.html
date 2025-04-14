@@ -44,7 +44,7 @@
             <div class="budget">
                 <form>
                     <label for="budget">💰 Ngân sách tháng:</label>
-                    <input type="text" name="budget" id="budgetInput" placeholder="VD: 500000">
+                    <input type="number" name="budget" id="budgetInput" placeholder="VD: 500000">
                     <button id="saveButton" type="button">Lưu</button>
                 </form>
             </div>
@@ -59,7 +59,7 @@
                 <!-- Thêm danh mục -->
                 <form>
                     <input class="categoryInput" type="text" name="categoryName" id="categoryNameInput" placeholder="Tên danh mục">
-                    <input class="categoryInput" type="text" name="limit" id="limitInput" placeholder="Giới hạn (VND)">
+                    <input class="categoryInput" type="number" name="limit" id="limitInput" placeholder="Giới hạn (VND)">
                     <button class="categoryInput" type="button" id="addCategory">Thêm danh mục</button>
                 </form>
                 <!-- Các danh mục -->
@@ -71,7 +71,7 @@
             </div>
             <div class="addSpending">
                 <form>
-                    <input class="addSpendingInput" type="text" name="money" id="spendingMoneyInput" placeholder="Số tiền">
+                    <input class="addSpendingInput" type="number" name="money" id="spendingMoneyInput" placeholder="Số tiền">
                     <select class="addSpendingInput" name="spendingOption" id="spendingOption">
                         <option value="1">Tiền chi tiêu</option>
                     </select>
@@ -86,7 +86,7 @@
                     <input type="text" name="search" id="searchHistoryInput" placeholder="Tìm nội dung">
                     <button style="background-color:#1D4ED8 ;" id="submitHistoryButton" class="btn btn-primary" type="button"><i class="bi bi-search"></i></button>
                     <select name="sort" id="sort">
-                        <option selected>Sắp xếp theo giá</option>
+                        <option selected value="0">Sắp xếp theo giá</option>
                         <option value="1">Giảm dần</option>
                         <option value="2">Tăng dần</option>
                     </select>
