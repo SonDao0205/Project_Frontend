@@ -208,13 +208,12 @@ const renderCategoriesData = (monthValue) => {
 // Hàm xoá phần tử trong quản lí danh mục
 const handleDeleteCategory = (index,categoryIndex,monthValue) => {
     monthlyCategoriesLocals[categoryIndex].categories.splice(index,1)
+    saveLocals()
     renderCategoriesData(monthValue)
     renderOption(monthValue)
-    saveLocals()
     const historyIndex = transactionsLocals.findIndex((element) => element.month === monthValue)
     handleDeleteHistory(index,historyIndex,monthValue)
-    currentPage = 1;
-    renderPaginatedHistory(currentPage);
+    renderPaginatedHistory(1);
     
 }
 
@@ -331,18 +330,19 @@ const renderOption = (monthValue) => {
 
 // Hàm xoá lịch sử giao dịch
 const handleDeleteHistory = (index, historyIndex, monthValue) => {
-    console.log(transactionId);
-    
     if (!transactionsLocals[historyIndex] || !transactionsLocals[historyIndex].transaction[index]) {
         return; 
     }
     const monthReportIndex = monthlyReportsLocals.findIndex((element) => element.month === monthValue);
-    const transactionAmount = transactionsLocals[historyIndex].transaction[index].amount;
+    const transactionIndex = transactionsLocals[historyIndex].transaction.findIndex((element) => element.id === transactionId);
+    const transactionAmount = transactionsLocals[historyIndex].transaction[transactionIndex].amount;
+
     
     // cập nhật lại totalAmount
     if (monthReportIndex !== -1) {
+        const transaction = transactionsLocals[historyIndex].transaction[transactionIndex]
         monthlyReportsLocals[monthReportIndex].totalAmount -= transactionAmount;
-        const reportIndex = monthlyReportsLocals[monthReportIndex].details.findIndex((element) => element.categoryId === transactionsLocals[historyIndex].transaction[index].categoryId);
+        const reportIndex = monthlyReportsLocals[monthReportIndex].details.findIndex((element) => element.categoryId === transaction.categoryId && element.amount === transaction.amount);
         if (reportIndex !== -1) {
             monthlyReportsLocals[monthReportIndex].details.splice(reportIndex, 1);
         }
@@ -355,7 +355,6 @@ const handleDeleteHistory = (index, historyIndex, monthValue) => {
         remainAmountElement.textContent = `${monthlyCategoriesLocals[monthCategoryIndex].remainMoney.toLocaleString('it-IT', {style : 'currency', currency : 'VND'})}`;
     }
     // Xóa 
-    const transactionIndex = transactionsLocals[historyIndex].transaction.findIndex((element) => element.id === transactionId);
     transactionsLocals[historyIndex].transaction.splice(transactionIndex, 1);
     saveLocals();
     currentPage = 1;
@@ -494,6 +493,7 @@ const renderPaginatedHistory = (page) => {
     if (historyIndex !== -1) {
         const start = (page - 1) * perPage;
         const end = start + perPage;
+
         const paginatedTransactions = transactionsLocals[historyIndex].transaction.slice(start, end);
 
         const htmls = paginatedTransactions.map((transaction) => {
@@ -701,7 +701,7 @@ const firstRender = (index,monthValue) => {
             paginationElement.innerHTML = "";
         }
 }
-    
+
 // hàm sẽ lấy ra ngày hôm nay và render ra dữ liệu của ngày hôm nay
 const load = () => {
     // bắt đầu vào web thì sẽ cập nhật monthValue = ngày hôm nay
